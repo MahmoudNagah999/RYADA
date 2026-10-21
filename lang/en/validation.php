@@ -286,5 +286,6 @@ return [
         'winner'                   => 'winner',
         'work'                     => 'work',
         'year'                     => 'year',
+        'club_name' => 'club name',
     ],
 ];

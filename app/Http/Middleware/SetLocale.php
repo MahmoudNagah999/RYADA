@@ -40,7 +40,8 @@ class SetLocale
 
     private function fromUser(Request $request): ?string
     {
-        $locale = $request->user()?->locale;
+        // SetLocale runs before auth:sanctum, so resolve the user through the sanctum guard explicitly.
+        $locale = $request->user('sanctum')?->locale;
 
         return $this->isSupported($locale) ? $locale : null;
     }
