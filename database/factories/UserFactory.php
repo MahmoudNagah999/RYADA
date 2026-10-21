@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Domain\Club\Models\Club;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +26,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'club_id' => Club::factory(),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
@@ -40,6 +42,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Attach the user to an existing club.
+     */
+    public function forClub(Club $club): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'club_id' => $club->id,
         ]);
     }
 }

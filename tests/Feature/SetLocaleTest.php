@@ -34,7 +34,8 @@ it('handles regional codes and quality values', function () {
 
 it('uses the user locale when there is no header', function () {
     /** @var TestCase $this */
-    $user = User::factory()->make(['locale' => 'ar']);
+    // club_id is passed explicitly so the factory does not create a Club (no DB needed here).
+    $user = User::factory()->make(['club_id' => 1, 'locale' => 'ar']);
 
     $this->actingAs($user)
         ->getJson('/_test/locale', ['Accept-Language' => ''])
@@ -43,7 +44,7 @@ it('uses the user locale when there is no header', function () {
 
 it('prefers the header over the user locale', function () {
     /** @var TestCase $this */
-    $user = User::factory()->make(['locale' => 'ar']);
+    $user = User::factory()->make(['club_id' => 1, 'locale' => 'ar']);
 
     $this->actingAs($user)
         ->getJson('/_test/locale', ['Accept-Language' => 'en'])
@@ -52,7 +53,7 @@ it('prefers the header over the user locale', function () {
 
 it('ignores unsupported locales', function () {
     /** @var TestCase $this */
-    $user = User::factory()->make(['locale' => 'xx']);
+    $user = User::factory()->make(['club_id' => 1, 'locale' => 'xx']);
 
     $this->actingAs($user)
         ->getJson('/_test/locale', ['Accept-Language' => 'fr'])
