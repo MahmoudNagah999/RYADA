@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Domain\Shared\Tenancy\CurrentClub;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +12,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register CurrentClub as a scoped service not singleton, so each request/queue workers gets its own instance.
+        $this->app->scoped(CurrentClub::class);
     }
 
     /**

@@ -5,3 +5,9 @@ parameters:
     paths:
         - app
     level: 5
+
+    ignoreErrors:
+        # Remove when the first tenant-owned model (Player, #18) uses the trait.
+        -
+            identifier: trait.unused
+            path: app/Domain/Shared/Tenancy/BelongsToClub.php
