@@ -1,4 +1,4 @@
-# RYADA
+﻿# RYADA
 
 Multi-tenant SaaS for managing karate clubs and tournaments.
 
@@ -57,10 +57,18 @@ Conventions:
 - Every user-facing string is a translation key present in both `en` and `ar`.
 - Every issue is a branch + pull request with Conventional Commits (`feat(player): ...`).
 
+## Localization
+
+The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
+
+- Locale is resolved from the `Accept-Language` header, then `users.locale`, then the default (`en`). Clients should always send the user's chosen language in `Accept-Language`.
+- Errors have a stable `code` and a translated `message`. Branch on `code`, not `message`.
+- Rule: never hardcode user-facing strings. Add the key to both `lang/en` and `lang/ar`; CI checks that they match.
 ## Architecture decisions
 
 - [ADR-001: Tenancy strategy](docs/adr/001-tenancy-strategy.md)
 - [ADR-002: Project structure](docs/adr/002-project-structure.md)
+- [ADR-003: Localization](docs/adr/003-localization.md)
 
 ## Getting started
 
@@ -84,3 +92,4 @@ composer analyse   # Larastan
 composer check     # all checks
 php artisan test   # Pest
 ```
+
