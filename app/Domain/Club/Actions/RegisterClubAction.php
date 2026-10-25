@@ -2,7 +2,9 @@
 
 namespace App\Domain\Club\Actions;
 
+use App\Domain\Auth\Actions\SyncClubRolesAction;
 use App\Domain\Auth\DTOs\LoginResult;
+use App\Domain\Auth\Enums\RoleName;
 use App\Domain\Club\DTOs\RegisterClubData;
 use App\Domain\Club\Models\Club;
 use App\Models\User;
@@ -11,6 +13,8 @@ use Illuminate\Support\Str;
 
 class RegisterClubAction
 {
+    public function __construct(private readonly SyncClubRolesAction $syncClubRoles) {}
+
     public function execute(RegisterClubData $data): LoginResult
     {
         return DB::transaction(function () use ($data) {
@@ -28,12 +32,26 @@ class RegisterClubAction
             $user->club()->associate($club);
             $user->save();
 
-            // The Owner role is assigned here in #7 (spatie/laravel-permission, team = club).
+            $this->syncClubRoles->execute($club);
+            $this->assignOwnerRole($user, $club);
 
             $token = $user->createToken('api', ['*'])->plainTextToken;
 
             return new LoginResult($user, $token, ['*']);
         });
+    }
+
+    private function assignOwnerRole(User $user, Club $club): void
+    {
+        $previousTeamId = getPermissionsTeamId();
+
+        setPermissionsTeamId($club->id);
+
+        try {
+            $user->assignRole(RoleName::Owner->value);
+        } finally {
+            setPermissionsTeamId($previousTeamId);
+        }
     }
 
     private function uniqueSlug(string $name): string

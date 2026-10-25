@@ -35,20 +35,23 @@ flowchart LR
 Request flow on the club API: `SetLocale` and tenant resolution middleware run first, then a thin Controller validates with a Form Request, builds a DTO, calls an Action, and returns an API Resource. Authorization is handled by Policies.
 
 ## Project structure
+
+```text
 app/
-Domain/
-<Domain>/ # Club, Player, Tournament, ...
-Actions/
-DTOs/
-Enums/
-Models/
-Policies/
-Shared/ # cross-domain pieces (e.g. BelongsToClub)
-Http/
-Controllers/Api/V1/
-Requests/
-Resources/
-docs/adr/ # architecture decision records
+  Domain/
+    <Domain>/            # Club, Player, Tournament, ...
+      Actions/
+      DTOs/
+      Enums/
+      Models/
+      Policies/
+    Shared/              # cross-domain pieces (e.g. BelongsToClub)
+  Http/
+    Controllers/Api/V1/
+    Requests/
+    Resources/
+docs/adr/                # architecture decision records
+```
 
 Conventions:
 
@@ -57,6 +60,13 @@ Conventions:
 - Every user-facing string is a translation key present in both `en` and `ar`.
 - Every issue is a branch + pull request with Conventional Commits (`feat(player): ...`).
 
+## Roles & permissions
+
+RBAC uses `spatie/laravel-permission` in Teams mode, with the club as the team. Each club has its own `owner`, `coach`, `staff` and `referee` roles, created at registration by `SyncClubRolesAction`. Policies check both the club and the permission. See [ADR-004](docs/adr/004-roles-and-permissions.md).
+
+- Authorize against the model (`$this->authorize('update', $club)`), never against a bare permission string such as `can('club.update')`, because that skips the club check.
+- Token abilities (`read` / `write`) only cap what a token can do. Real permissions come from roles and policies.
+
 ## Localization
 
 The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
@@ -64,11 +74,13 @@ The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
 - Locale is resolved from the `Accept-Language` header, then `users.locale`, then the default (`en`). Clients should always send the user's chosen language in `Accept-Language`.
 - Errors have a stable `code` and a translated `message`. Branch on `code`, not `message`.
 - Rule: never hardcode user-facing strings. Add the key to both `lang/en` and `lang/ar`; CI checks that they match.
+
 ## Architecture decisions
 
 - [ADR-001: Tenancy strategy](docs/adr/001-tenancy-strategy.md)
 - [ADR-002: Project structure](docs/adr/002-project-structure.md)
 - [ADR-003: Localization](docs/adr/003-localization.md)
+- [ADR-004: Roles and permissions](docs/adr/004-roles-and-permissions.md)
 
 ## Getting started
 
@@ -89,7 +101,6 @@ php artisan migrate
 ```bash
 composer lint      # Pint
 composer analyse   # Larastan
-composer check     # all checks
+composer check     # lint + analyse + tests
 php artisan test   # Pest
 ```
-
