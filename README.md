@@ -32,7 +32,7 @@ flowchart LR
     Domain --> DB[("MySQL<br/>single DB, club_id scoped")]
 ```
 
-Request flow on the club API: `SetLocale` and tenant resolution middleware run first, then a thin Controller validates with a Form Request, builds a DTO, calls an Action, and returns an API Resource. Authorization is handled by Policies.
+Request flow on the club API: `SetLocale`, then the rate limiter and, on club routes, `auth:sanctum` and the tenant middleware run first. Then a thin Controller validates with a Form Request, builds a DTO, calls an Action, and returns an API Resource. Authorization is handled by Policies.
 
 ## Project structure
 
@@ -68,6 +68,10 @@ RBAC uses `spatie/laravel-permission` in Teams mode, with the club as the team. 
 - Authorize against the model (`$this->authorize('update', $club)`), never against a bare permission string such as `can('club.update')`, because that skips the club check.
 - Token abilities (`read` / `write`) only cap what a token can do. Real permissions come from roles and policies.
 
+## API conventions
+
+All routes live under `/api/vN/` (see `routes/api/v1.php`). Successful responses are wrapped in `data`. Every error is `{"code": "...", "message": "..."}` (plus `errors` on 422); branch on `code`. Public endpoints that can be abused have their own rate limiter. See [ADR-005](docs/adr/005-api-conventions.md).
+
 ## Localization
 
 The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
@@ -82,6 +86,7 @@ The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
 - [ADR-002: Project structure](docs/adr/002-project-structure.md)
 - [ADR-003: Localization](docs/adr/003-localization.md)
 - [ADR-004: Roles and permissions](docs/adr/004-roles-and-permissions.md)
+- [ADR-005: API conventions](docs/adr/005-api-conventions.md)
 
 ## Getting started
 

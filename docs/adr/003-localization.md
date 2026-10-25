@@ -11,7 +11,7 @@ RYADA serves Egyptian and Arabic-speaking clubs, so the API and the admin panel 
 
 ## Decision
 
-1. **Locale resolution** (`SetLocale` middleware): `Accept-Language` header > `users.locale` > default `en`. Supported locales live in `config/locales.php`. The response carries a `Content-Language` header.
+1. **Locale resolution** (`SetLocale` middleware): `Accept-Language` header > `users.locale` > default `en`. Supported locales live in `config/locales.php`. The response carries a `Content-Language` header. The middleware is global (registered in `bootstrap/app.php`), so it runs before routing and authentication and error responses such as 401, 404 and 405 are translated too.
 2. **Static strings:** translation keys in `lang/en` and `lang/ar`, used through `__()`. Arabic framework translations come from `laravel-lang`.
 3. **Stored reference data** (belts, categories, plans): `spatie/laravel-translatable` (JSON columns). Player and club names are stored as entered and never translated.
 4. **API errors:** a stable English `code` plus a translated `message`.

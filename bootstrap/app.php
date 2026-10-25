@@ -1,6 +1,6 @@
 <?php
 
-use App\Domain\Shared\Exceptions\BusinessRuleException;
+use App\Http\Errors\ApiExceptionRenderer;
 use App\Http\Middleware\ResolveCurrentClub;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -18,7 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(append: [SetLocale::class]);
+        // Global, so the locale is set before routing and authentication. Otherwise 401, 404
+        // and 405 responses (thrown before route middleware runs) would not be translated.
+        $middleware->append(SetLocale::class);
 
         $middleware->alias([
             'abilities' => CheckAbilities::class,
@@ -27,14 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (BusinessRuleException $e, Request $request) {
-            if (! $request->expectsJson() && ! $request->is('api/*')) {
-                return null;
-            }
-
-            return response()->json([
-                'code' => $e->errorCode,
-                'message' => __("errors.{$e->errorCode}", $e->params),
-            ], $e->status);
-        });
+        $exceptions->render(
+            fn (Throwable $e, Request $request) => ApiExceptionRenderer::render($e, $request)
+        );
     })->create();
