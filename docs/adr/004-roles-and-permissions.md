@@ -36,8 +36,9 @@ is never an Owner in another, and clubs can later customize their own roles.
 ## Consequences
 
 - The current team must be set before any role or permission check:
-  `setPermissionsTeamId($club->id)`. The tenant middleware does this in #8.
-  Actions, jobs, seeders and tests set it explicitly and restore the previous value.
+  `setPermissionsTeamId($club->id)`. The `tenant` middleware (`ResolveCurrentClub`, #8)
+  does this per request, together with `CurrentClub`, and restores the previous values
+  afterwards. Actions, jobs, seeders and tests set it explicitly and restore the previous value.
 - Adding a permission means editing `PermissionName` and `RoleName::permissions()`,
   then running `SyncClubRolesAction` for existing clubs (a migration or command).
 - The permission cache is per team. When Redis arrives (#29) the tenant must be part

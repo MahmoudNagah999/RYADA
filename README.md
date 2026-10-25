@@ -59,6 +59,7 @@ Conventions:
 - Controllers stay thin. The domain layer never depends on `App\Http` (enforced by an architecture test).
 - Every user-facing string is a translation key present in both `en` and `ar`.
 - Every issue is a branch + pull request with Conventional Commits (`feat(player): ...`).
+- Every club-scoped route goes inside the `tenant` middleware group, after `auth:sanctum`. It sets the current club and the permissions team from the authenticated user.
 
 ## Roles & permissions
 
