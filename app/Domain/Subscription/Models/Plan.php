@@ -2,6 +2,7 @@
 
 namespace App\Domain\Subscription\Models;
 
+use App\Domain\Subscription\Enums\PlanLimit;
 use Database\Factories\PlanFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,5 +47,13 @@ class Plan extends Model
             'duration_months' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    /** Null means unlimited. */
+    public function limitFor(PlanLimit $limit): ?int
+    {
+        $value = $this->getAttribute($limit->column());
+
+        return $value === null ? null : (int) $value;
     }
 }

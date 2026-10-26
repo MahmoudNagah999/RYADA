@@ -1,11 +1,9 @@
 <?php
 
 return [
-
     'player.limit_reached' => 'خطتك تسمح بحد أقصى :max لاعبين.',
     'auth.invalid_credentials' => 'بيانات الدخول غير صحيحة.',
     'tenant.no_club' => 'حسابك غير مرتبط بأي نادٍ.',
-
     'validation.failed' => 'البيانات المدخلة غير صحيحة.',
     'http.unauthenticated' => 'يجب تسجيل الدخول أولاً.',
     'http.forbidden' => 'غير مسموح لك بتنفيذ هذا الإجراء.',
@@ -14,6 +12,9 @@ return [
     'http.too_many_requests' => 'طلبات كثيرة جداً. حاول مرة أخرى بعد :seconds ثانية.',
     'http.error' => 'تعذر إكمال الطلب.',
     'server.error' => 'حدث خطأ من جانبنا. حاول مرة أخرى لاحقاً.',
-
     'plan.inactive' => 'هذه الخطة غير متاحة.',
+    'club.suspended' => 'هذا النادي موقوف. يرجى التواصل مع الدعم.',
+    'subscription.expired' => 'انتهى اشتراك هذا النادي. يرجى تجديده للمتابعة.',
+    'plan.players_limit_reached' => 'تسمح خطتك بحد أقصى :max لاعب. قم بترقية خطتك لإضافة المزيد.',
+    'plan.coaches_limit_reached' => 'تسمح خطتك بحد أقصى :max مدرب. قم بترقية خطتك لإضافة المزيد.',
 ];

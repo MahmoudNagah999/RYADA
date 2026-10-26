@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Errors\ApiExceptionRenderer;
+use App\Http\Middleware\EnsureClubSubscriptionActive;
 use App\Http\Middleware\ResolveCurrentClub;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
             'tenant' => ResolveCurrentClub::class,
+            'subscription' => EnsureClubSubscriptionActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
