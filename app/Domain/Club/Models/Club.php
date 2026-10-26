@@ -73,4 +73,10 @@ class Club extends Model
     {
         return $this->status === ClubStatus::Suspended;
     }
+
+    public function hasExpiredSubscription(): bool
+    {
+        return $this->subscription_ends_at !== null
+            && $this->subscription_ends_at->isPast();
+    }
 }
