@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Domain\Shared\Tenancy\CurrentClub;
+use App\Models\Admin;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -25,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Super-admins (separate model and guard) bypass club policies. Returning
+        // null for everyone else leaves club users to ClubPolicy as before.
+        Gate::before(fn ($user) => $user instanceof Admin ? true : null);
+
         $this->configureRateLimiting();
     }
 
