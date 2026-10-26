@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Clubs\Pages;
 
+use App\Filament\Resources\Clubs\Actions\ClubPlanActions;
 use App\Filament\Resources\Clubs\Actions\ClubStatusActions;
 use App\Filament\Resources\Clubs\ClubResource;
 use Filament\Actions\EditAction;
@@ -17,6 +18,7 @@ class ViewClub extends ViewRecord
             EditAction::make(),
             ClubStatusActions::suspend(),
             ClubStatusActions::activate(),
+            ClubPlanActions::assign(),
         ];
     }
 }
