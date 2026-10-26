@@ -28,6 +28,17 @@ class ClubInfolist
                     ->label(__('admin.clubs.fields.suspended_at'))
                     ->dateTime()
                     ->placeholder('—'),
+                TextEntry::make('plan.name')
+                    ->label(__('admin.clubs.fields.plan'))
+                    ->placeholder('—'),
+                TextEntry::make('subscription_starts_at')
+                    ->label(__('admin.clubs.fields.subscription_starts_at'))
+                    ->date()
+                    ->placeholder('—'),
+                TextEntry::make('subscription_ends_at')
+                    ->label(__('admin.clubs.fields.subscription_ends_at'))
+                    ->date()
+                    ->placeholder('—'),
                 TextEntry::make('created_at')
                     ->label(__('admin.clubs.fields.created_at'))
                     ->dateTime(),

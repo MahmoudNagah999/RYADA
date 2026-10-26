@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Clubs\Tables;
 
 use App\Domain\Club\Enums\ClubStatus;
+use App\Filament\Resources\Clubs\Actions\ClubPlanActions;
 use App\Filament\Resources\Clubs\Actions\ClubStatusActions;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -31,6 +32,14 @@ class ClubsTable
                         ClubStatus::Active => 'success',
                         ClubStatus::Suspended => 'danger',
                     }),
+                TextColumn::make('plan.name')
+                    ->label(__('admin.clubs.fields.plan'))
+                    ->placeholder('—'),
+                TextColumn::make('subscription_ends_at')
+                    ->label(__('admin.clubs.fields.subscription_ends_at'))
+                    ->date()
+                    ->sortable()
+                    ->placeholder('—'),
                 TextColumn::make('suspended_at')
                     ->label(__('admin.clubs.fields.suspended_at'))
                     ->dateTime()
@@ -56,6 +65,7 @@ class ClubsTable
                 EditAction::make(),
                 ClubStatusActions::suspend(),
                 ClubStatusActions::activate(),
+                ClubPlanActions::assign(),
             ]);
     }
 }

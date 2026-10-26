@@ -15,4 +15,6 @@ return [
     'http.error' => 'The request could not be completed.',
     'server.error' => 'Something went wrong on our side. Please try again later.',
 
+    'plan.inactive' => 'This plan is not available.',
+
 ];
