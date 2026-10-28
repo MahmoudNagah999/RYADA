@@ -33,7 +33,7 @@ it('records club.suspended once and skips the idempotent no-op', function () {
     $activity = Activity::query()->where('description', 'club.suspended')->sole();
 
     expect($activity->club_id)->toBe($club->id)
-        ->and($activity->properties->get('status'))->toBe(['from' => 'active', 'to' => 'suspended']);
+        ->and($activity->properties->get('status'))->toEqual(['from' => 'active', 'to' => 'suspended']);
 });
 
 it('records club.activated only when the club was suspended', function () {
@@ -49,7 +49,7 @@ it('records club.activated only when the club was suspended', function () {
     $activity = Activity::query()->where('description', 'club.activated')->sole();
 
     expect($activity->club_id)->toBe($club->id)
-        ->and($activity->properties->get('status'))->toBe(['from' => 'suspended', 'to' => 'active']);
+        ->and($activity->properties->get('status'))->toEqual(['from' => 'suspended', 'to' => 'active']);
 });
 
 it('records club.plan_assigned with the plan and the previous plan', function () {

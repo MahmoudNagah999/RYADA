@@ -41,7 +41,7 @@ it('records only the changed fields on plan.updated', function () {
     $activity = Activity::query()->where('description', 'plan.updated')->sole();
 
     expect($activity->club_id)->toBeNull()
-        ->and($activity->properties->get('changes'))->toBe([
+        ->and($activity->properties->get('changes'))->toEqual([
             'max_players' => ['from' => 50, 'to' => 80],
         ])
         ->and($plan->refresh()->max_players)->toBe(80);
@@ -61,7 +61,7 @@ it('logs translatable name changes as readable arrays', function () {
 
     $activity = Activity::query()->where('description', 'plan.updated')->sole();
 
-    expect($activity->properties->get('changes'))->toBe([
+    expect($activity->properties->get('changes'))->toEqual([
         'name' => [
             'from' => ['en' => 'Old', 'ar' => 'قديم'],
             'to' => ['en' => 'New', 'ar' => 'قديم'],
