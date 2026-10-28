@@ -58,4 +58,27 @@ return [
             'is_active' => 'مفعّلة',
         ],
     ],
+
+    'audit' => [
+        'navigation' => 'سجل العمليات',
+        'model' => 'عملية',
+        'plural' => 'سجل العمليات',
+        'system' => 'النظام / عام',
+        'fields' => [
+            'when' => 'الوقت',
+            'event' => 'العملية',
+            'causer' => 'بواسطة',
+            'club' => 'النادي',
+            'subject' => 'الهدف',
+            'details' => 'التفاصيل',
+        ],
+        'events' => [
+            'club.created' => 'تم إنشاء النادي',
+            'club.suspended' => 'تم إيقاف النادي',
+            'club.activated' => 'تم تفعيل النادي',
+            'club.plan_assigned' => 'تم تعيين باقة',
+            'plan.created' => 'تم إنشاء باقة',
+            'plan.updated' => 'تم تعديل باقة',
+        ],
+    ],
 ];
