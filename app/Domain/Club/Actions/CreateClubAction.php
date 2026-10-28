@@ -2,6 +2,8 @@
 
 namespace App\Domain\Club\Actions;
 
+use App\Domain\Audit\Actions\RecordActivityAction;
+use App\Domain\Audit\Enums\ActivityEvent;
 use App\Domain\Auth\Actions\SyncClubRolesAction;
 use App\Domain\Club\Models\Club;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +11,10 @@ use Illuminate\Support\Str;
 
 class CreateClubAction
 {
-    public function __construct(private readonly SyncClubRolesAction $syncClubRoles) {}
+    public function __construct(
+        private readonly SyncClubRolesAction $syncClubRoles,
+        private readonly RecordActivityAction $recordActivity,
+    ) {}
 
     public function execute(string $name): Club
     {
@@ -20,6 +25,12 @@ class CreateClubAction
             ]);
 
             $this->syncClubRoles->execute($club);
+
+            $this->recordActivity->execute(
+                ActivityEvent::ClubCreated,
+                $club,
+                ['name' => $club->name, 'slug' => $club->slug],
+            );
 
             return $club;
         });

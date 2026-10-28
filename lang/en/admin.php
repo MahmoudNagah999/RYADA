@@ -58,4 +58,27 @@ return [
             'is_active' => 'Active',
         ],
     ],
+
+    'audit' => [
+        'navigation' => 'Audit log',
+        'model' => 'Activity',
+        'plural' => 'Audit log',
+        'system' => 'System / public',
+        'fields' => [
+            'when' => 'When',
+            'event' => 'Event',
+            'causer' => 'Performed by',
+            'club' => 'Club',
+            'subject' => 'Subject',
+            'details' => 'Details',
+        ],
+        'events' => [
+            'club.created' => 'Club created',
+            'club.suspended' => 'Club suspended',
+            'club.activated' => 'Club activated',
+            'club.plan_assigned' => 'Plan assigned',
+            'plan.created' => 'Plan created',
+            'plan.updated' => 'Plan updated',
+        ],
+    ],
 ];

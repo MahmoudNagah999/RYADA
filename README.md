@@ -8,7 +8,7 @@ Multi-tenant SaaS for managing karate clubs and tournaments.
 
 - **Clubs (tenants):** each club manages its own players, staff, training groups, memberships, and payments.
 - **Tournaments:** registration rules, kumite bracket generation, kata scoring, results, and certificates.
-- **Platform admin:** the platform owner manages clubs, SaaS plans, and subscriptions from a Filament panel.
+- **Platform admin:** the platform owner manages clubs, SaaS plans, and subscriptions from a Filament panel, and can browse an audit log of sensitive operations.
 - **Bilingual:** Arabic and English across API messages and the admin panel.
 
 ## Tech stack
@@ -80,6 +80,15 @@ The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
 - Errors have a stable `code` and a translated `message`. Branch on `code`, not `message`.
 - Rule: never hardcode user-facing strings. Add the key to both `lang/en` and `lang/ar`; CI checks that they match.
 
+## Audit log
+
+Sensitive operations are recorded with `spatie/laravel-activitylog` and browsable (read-only) in the admin panel under **Audit log**, with filters by event and club. See [ADR-006](docs/adr/006-audit-log.md).
+
+- Record an event from an Action with `RecordActivityAction::execute(ActivityEvent::X, $subject, $properties)`, inside the Action's `DB::transaction`, so the log and the change commit or roll back together.
+- Events live in `App\Domain\Audit\Enums\ActivityEvent`. A new event also needs its translation key in `lang/en/admin.php` and `lang/ar/admin.php` (`audit.events`).
+- Platform-level events (such as plan changes) have no club (`club_id = null`).
+- Never put passwords, tokens or national IDs in the event properties.
+
 ## Architecture decisions
 
 - [ADR-001: Tenancy strategy](docs/adr/001-tenancy-strategy.md)
@@ -87,6 +96,7 @@ The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
 - [ADR-003: Localization](docs/adr/003-localization.md)
 - [ADR-004: Roles and permissions](docs/adr/004-roles-and-permissions.md)
 - [ADR-005: API conventions](docs/adr/005-api-conventions.md)
+- [ADR-006: Audit log](docs/adr/006-audit-log.md)
 
 ## Getting started
 
