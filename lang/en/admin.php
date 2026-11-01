@@ -79,6 +79,9 @@ return [
             'club.plan_assigned' => 'Plan assigned',
             'plan.created' => 'Plan created',
             'plan.updated' => 'Plan updated',
+            'club.profile_updated' => 'Club profile updated',
+            'club.logo_updated' => 'Club logo updated',
+            'club.logo_removed' => 'Club logo removed',
         ],
     ],
 ];

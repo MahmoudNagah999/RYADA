@@ -77,4 +77,6 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 
+    'club_logo_disk' => env('CLUB_LOGO_DISK', 'public'),
+
 ];

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\RegisterClubController;
+use App\Http\Controllers\Api\V1\Club\ClubController;
+use App\Http\Controllers\Api\V1\Club\ClubLogoController;
 use Illuminate\Support\Facades\Route;
 
 // Convention: read routes use `ability:read,write` (any of); write routes use `abilities:write`.
@@ -21,10 +23,13 @@ Route::prefix('auth')->group(function () {
             // Outside `subscription` on purpose: a suspended or expired club must still be able
             // to read its own status. A new exception needs an entry in RouteTenancyTest.
             Route::get('me', [AuthController::class, 'me'])->middleware('ability:read,write');
-
-            Route::middleware('subscription')->group(function () {
-                // Club-scoped routes go here.
-            });
         });
     });
+});
+
+Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function () {
+    Route::get('club', [ClubController::class, 'show'])->middleware('ability:read,write');
+    Route::put('club', [ClubController::class, 'update'])->middleware('abilities:write');
+    Route::post('club/logo', [ClubLogoController::class, 'store'])->middleware('abilities:write');
+    Route::delete('club/logo', [ClubLogoController::class, 'destroy'])->middleware('abilities:write');
 });

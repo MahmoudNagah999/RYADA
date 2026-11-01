@@ -287,5 +287,8 @@ return [
         'work'                     => 'work',
         'year'                     => 'year',
         'club_name' => 'club name',
+        'contact_email' => 'contact email',
+        'contact_phone' => 'contact phone',
+        'logo' => 'logo',
     ],
 ];

@@ -8,8 +8,11 @@ enum ActivityEvent: string
     case ClubSuspended = 'club.suspended';
     case ClubActivated = 'club.activated';
     case ClubPlanAssigned = 'club.plan_assigned';
+    case ClubProfileUpdated = 'club.profile_updated';
     case PlanCreated = 'plan.created';
     case PlanUpdated = 'plan.updated';
+    case ClubLogoUpdated = 'club.logo_updated';
+    case ClubLogoRemoved = 'club.logo_removed';
 
     /**
      * Log name = the part before the dot (club, plan, ...).
