@@ -79,6 +79,9 @@ return [
             'club.plan_assigned' => 'تم تعيين باقة',
             'plan.created' => 'تم إنشاء باقة',
             'plan.updated' => 'تم تعديل باقة',
+            'club.profile_updated' => 'تحديث بيانات النادي',
+            'club.logo_updated' => 'تحديث شعار النادي',
+            'club.logo_removed' => 'حذف شعار النادي',
         ],
     ],
 ];

@@ -17,6 +17,11 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property ClubStatus $status
+ * @property string|null $logo_path
+ * @property string|null $contact_email
+ * @property string|null $contact_phone
+ * @property string|null $city
+ * @property string|null $address
  * @property Carbon|null $suspended_at
  * @property int|null $plan_id
  * @property Carbon|null $subscription_starts_at
@@ -29,9 +34,16 @@ class Club extends Model
     /** @use HasFactory<ClubFactory> */
     use HasFactory;
 
+    /**
+     * `logo_path` is intentionally not here: it only changes through the logo upload Action.
+     */
     protected $fillable = [
         'name',
         'slug',
+        'contact_email',
+        'contact_phone',
+        'city',
+        'address',
     ];
 
     protected $attributes = [
