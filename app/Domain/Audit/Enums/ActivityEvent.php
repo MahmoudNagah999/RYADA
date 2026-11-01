@@ -13,6 +13,11 @@ enum ActivityEvent: string
     case PlanUpdated = 'plan.updated';
     case ClubLogoUpdated = 'club.logo_updated';
     case ClubLogoRemoved = 'club.logo_removed';
+    case StaffInvited = 'staff.invited';
+    case StaffInvitationRevoked = 'staff.invitation_revoked';
+    case StaffJoined = 'staff.joined';
+    case StaffRoleChanged = 'staff.role_changed';
+    case StaffRemoved = 'staff.removed';
 
     /**
      * Log name = the part before the dot (club, plan, ...).

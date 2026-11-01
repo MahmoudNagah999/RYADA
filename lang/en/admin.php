@@ -82,6 +82,11 @@ return [
             'club.profile_updated' => 'Club profile updated',
             'club.logo_updated' => 'Club logo updated',
             'club.logo_removed' => 'Club logo removed',
+            'staff.invited' => 'Staff member invited',
+            'staff.invitation_revoked' => 'Staff invitation revoked',
+            'staff.joined' => 'Staff member joined',
+            'staff.role_changed' => 'Staff role changed',
+            'staff.removed' => 'Staff member removed',
         ],
     ],
 ];

@@ -82,6 +82,11 @@ return [
             'club.profile_updated' => 'تحديث بيانات النادي',
             'club.logo_updated' => 'تحديث شعار النادي',
             'club.logo_removed' => 'حذف شعار النادي',
+            'staff.invited' => 'تمت دعوة أحد أعضاء الفريق',
+            'staff.invitation_revoked' => 'تم إلغاء دعوة عضو الفريق',
+            'staff.joined' => 'انضم عضو جديد إلى الفريق',
+            'staff.role_changed' => 'تم تغيير صلاحية عضو الفريق',
+            'staff.removed' => 'تمت إزالة عضو الفريق',
         ],
     ],
 ];

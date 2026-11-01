@@ -84,6 +84,10 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
+    'invitation_accept_url' => env('INVITATION_ACCEPT_URL', env('APP_URL', 'http://localhost').'/accept-invitation'),
+
+    'invitation_expiry_days' => (int) env('STAFF_INVITATION_EXPIRY_DAYS', 7),
+
     /*
     |--------------------------------------------------------------------------
     | Encryption Key

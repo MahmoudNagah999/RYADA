@@ -17,4 +17,12 @@ return [
     'subscription.expired' => 'انتهى اشتراك هذا النادي. يرجى تجديده للمتابعة.',
     'plan.players_limit_reached' => 'تسمح خطتك بحد أقصى :max لاعب. قم بترقية خطتك لإضافة المزيد.',
     'plan.coaches_limit_reached' => 'تسمح خطتك بحد أقصى :max مدرب. قم بترقية خطتك لإضافة المزيد.',
+    'staff.email_taken' => 'هذا البريد الإلكتروني مسجل بالفعل.',
+    'staff.invitation_pending' => 'توجد دعوة معلقة بالفعل لهذا البريد الإلكتروني.',
+    'staff.invitation_invalid' => 'هذه الدعوة غير صالحة أو انتهت صلاحيتها.',
+    'staff.cannot_remove_self' => 'لا يمكنك إزالة حسابك بنفسك.',
+    'staff.cannot_remove_owner' => 'لا يمكن إزالة مالك النادي.',
+    'staff.cannot_change_owner_role' => 'لا يمكن تغيير صلاحية مالك النادي.',
+    'staff.owner_role_not_assignable' => 'لا يمكن تعيين صلاحية المالك من خلال إدارة الفريق.',
+    'staff.last_owner_required' => 'يجب أن يحتفظ النادي بمالك واحد على الأقل.',
 ];
