@@ -57,5 +57,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Club registration creates data, so it gets a tighter hourly cap per IP.
         RateLimiter::for('register', fn (Request $request) => Limit::perHour(10)->by('register-ip:'.$request->ip()));
+
+        // Invitation acceptance is public and token-based, so limit it per IP.
+        RateLimiter::for('invitation', fn (Request $request) => Limit::perHour(10)->by('invitation-ip:'.$request->ip()));
     }
 }

@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Auth\AcceptStaffInvitationController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\RegisterClubController;
 use App\Http\Controllers\Api\V1\Club\ClubController;
 use App\Http\Controllers\Api\V1\Club\ClubLogoController;
+use App\Http\Controllers\Api\V1\Staff\StaffController;
+use App\Http\Controllers\Api\V1\Staff\StaffInvitationController;
 use Illuminate\Support\Facades\Route;
 
 // Convention: read routes use `ability:read,write` (any of); write routes use `abilities:write`.
@@ -14,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:auth');
     Route::post('register-club', RegisterClubController::class)->middleware('throttle:register');
+    Route::post('accept-invitation', [AcceptStaffInvitationController::class, 'store'])->middleware('throttle:invitation');
 
     Route::middleware('auth:sanctum')->group(function () {
         // Logout is allowed for any valid token, whatever its abilities or club.
@@ -32,4 +36,17 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
     Route::put('club', [ClubController::class, 'update'])->middleware('abilities:write');
     Route::post('club/logo', [ClubLogoController::class, 'store'])->middleware('abilities:write');
     Route::delete('club/logo', [ClubLogoController::class, 'destroy'])->middleware('abilities:write');
+
+    Route::get('staff', [StaffController::class, 'index'])->middleware('ability:read,write');
+    Route::patch('staff/{user}/role', [StaffController::class, 'updateRole'])
+        ->whereNumber('user')
+        ->middleware('abilities:write');
+    Route::delete('staff/{user}', [StaffController::class, 'destroy'])
+        ->whereNumber('user')
+        ->middleware('abilities:write');
+
+    Route::get('staff/invitations', [StaffInvitationController::class, 'index'])->middleware('ability:read,write');
+    Route::post('staff/invitations', [StaffInvitationController::class, 'store'])->middleware('abilities:write');
+    Route::delete('staff/invitations/{invitation}', [StaffInvitationController::class, 'destroy'])
+        ->middleware('abilities:write');
 });

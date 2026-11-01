@@ -37,4 +37,16 @@ enum RoleName: string
             ],
         };
     }
+
+    /**
+     * @return list<self>
+     */
+    public static function assignableToStaff(): array
+    {
+        return [
+            self::Coach,
+            self::Staff,
+            self::Referee,
+        ];
+    }
 }

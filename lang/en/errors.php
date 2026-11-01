@@ -18,4 +18,12 @@ return [
     'subscription.expired' => 'This club\'s subscription has expired. Please renew it to continue.',
     'plan.players_limit_reached' => 'Your plan allows up to :max players. Upgrade your plan to add more.',
     'plan.coaches_limit_reached' => 'Your plan allows up to :max coaches. Upgrade your plan to add more.',
+    'staff.email_taken' => 'This email address is already registered.',
+    'staff.invitation_pending' => 'A pending invitation already exists for this email address.',
+    'staff.invitation_invalid' => 'This invitation is invalid or has expired.',
+    'staff.cannot_remove_self' => 'You cannot remove your own account.',
+    'staff.cannot_remove_owner' => 'An Owner cannot be removed.',
+    'staff.cannot_change_owner_role' => 'An Owner role cannot be changed.',
+    'staff.owner_role_not_assignable' => 'The Owner role cannot be assigned through staff management.',
+    'staff.last_owner_required' => 'The club must have at least one Owner.',
 ];

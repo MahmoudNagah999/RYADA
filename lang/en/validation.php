@@ -290,5 +290,11 @@ return [
         'contact_email' => 'contact email',
         'contact_phone' => 'contact phone',
         'logo' => 'logo',
+        'token' => 'invitation token',
+        'search' => 'search',
+        'sort' => 'sort field',
+        'direction' => 'sort direction',
+        'per_page' => 'items per page',
+        'page' => 'page',
     ],
 ];

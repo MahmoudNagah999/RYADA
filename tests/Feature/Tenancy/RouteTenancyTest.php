@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Route;
 const TENANT_PUBLIC_ROUTES = [
     'POST api/v1/auth/login',
     'POST api/v1/auth/register-club',
+    // Public bearer-token flow; its own invitation limiter protects acceptance.
+    'POST api/v1/auth/accept-invitation',
 ];
 
 // Any valid token may call these, whatever its club.
