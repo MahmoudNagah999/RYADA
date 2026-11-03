@@ -7,7 +7,7 @@
 
 ## Context
 
-RYADA v1.0 manages clubs and academies that can offer several sports. Players, membership plans, training groups and player subscriptions all need to know about sports, and issues #18 to #21 and #41 depend on the same model. Karate belts, age categories, weight classes and tournaments arrive in v2.0 and must plug in without changing the v1.0 core.
+RYADA v1.0 manages clubs and academies that can offer several sports. Players, membership plans, training groups and player subscriptions all need to know about sports, and issues #18 to #21 and #57 depend on the same model. Karate belts, age categories, weight classes and tournaments arrive in v2.0 and must plug in without changing the v1.0 core.
 
 Questions this ADR answers:
 
@@ -52,7 +52,7 @@ Constraints:
 
 - `MembershipPlan` (#20): `sport_id` required.
 - `TrainingGroup` (#21): `sport_id` required.
-- `PlayerSubscription` (#41): no `sport_id` of its own. The sport comes from its plan. The Action checks that the player is enrolled in that sport.
+- `PlayerSubscription` (#57): no `sport_id` of its own. The sport comes from its plan. The Action checks that the player is enrolled in that sport.
 - `PlayerSubscription` stores a **snapshot** of price, currency and duration at subscription time, so changing a plan later never rewrites past subscriptions, balances or reports.
 - `Player` (#18) has no sport column. Sports come only through `player_sport`.
 
@@ -69,7 +69,7 @@ Constraints:
 - Each sport module owns its tables and its domain folder (for example `App\Domain\Karate` in v2.0). Its tables reference `player_id` and, where needed, `sport_id`, for example a `karate_profiles` table with belt and weight.
 - The link between a module and a sport is `Sport.slug`.
 - The core never imports a sport module. Modules depend on the core, not the other way around (to be enforced with an arch test when the first module exists).
-- The registration mechanism for modules (registry or interface) is designed in ADR-008 (#43), not here.
+- The registration mechanism for modules (registry or interface) is designed in ADR-008 (#59), not here.
 
 ## Consequences
 

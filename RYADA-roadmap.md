@@ -26,9 +26,9 @@ Repo: `github.com/MahmoudNagah999/RYADA`
   - **v2.0 = everything karate-specific and tournaments:** belts, age categories and weight classes, tournaments and registration, kumite brackets, kata scoring, results and certificates, live scoreboard (Reverb). Plan in `RYADA-roadmap-v2.0.md`; GitHub milestones `V2-M1` to `V2-M4`.
   - In v1.0 karate is just one more sport in the catalog (#19): no belts, no weight classes, no tournaments. `Player` has no belt or weight (#18).
   - Already built and kept: roles (`referee`) and permissions (`tournaments.*`, `scores.submit`) from #7, and the empty `Tournament` domain folder. Nothing is removed; they are used from v2.0.
-  - Design first: ADR-007 (#40) decides the multi-sport model before #18 to #21 are built. Sport-specific rules for v2.0 are designed in ADR-008 (#43), not now.
+  - Design first: ADR-007 (#56) decides the multi-sport model before #18 to #21 are built. Sport-specific rules for v2.0 are designed in ADR-008 (#59), not now.
   - Naming: club membership plans are `MembershipPlan` (#20), never `Plan`, which is the SaaS plan of the platform (#13).
-  - Issue numbers: #23 to #28 and #30 moved to v2.0; #19 and #20 were rewritten; #40 to #42 were added to v1.0 and #43 to #45 to v2.0.
+  - Issue numbers: #23 to #28 and #30 moved to v2.0; #19 and #20 were rewritten; #56, #57 and #58 were added to v1.0 and #59 to #61 to v2.0.
 - **Stack:** Laravel 13 (PHP 8.4), MySQL, REST APIs, Pest, Sanctum. Redis only where genuinely needed (Milestone 6). Reverb comes with the live scoreboard in v2.0.
 - **Admin panel:** Filament, for the super-admin (platform owner). Separate guard, no auth sharing with the API.
 - **Club dashboard:** API only (`/api/v1`), consumed by a mobile/web client (Flutter dev collaborates with me).
@@ -120,7 +120,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
   - **Decision (#14):** a club with no plan, a plan limit of `null`, or a null `subscription_ends_at` is **not restricted**. New clubs register without a plan, so blocking them would lock them out on day one. Revisit with the trial plan (Release 0.2 below).
   - **#15:** audit log with `spatie/laravel-activitylog` (ADR-006). New domain `App\Domain\Audit` (`Actions/RecordActivityAction`, `Enums/ActivityEvent`, `Models/Activity`); our own model is set in `activity_model` of `config/activitylog.php`. A migration adds `activity_log.club_id` (nullable FK, `nullOnDelete`, composite index with `created_at`). Events recorded: `club.created` (inside `CreateClubAction`, so register-club and the admin panel both log it), `club.suspended`, `club.activated`, `club.plan_assigned`, `plan.created`, `plan.updated`. `SuspendClubAction`, `ActivateClubAction`, `AssignPlanToClubAction` and `CreateClubAction` now take `RecordActivityAction` in the constructor and write the log inside a `DB::transaction`. New `CreatePlanAction` / `UpdatePlanAction` with the `PlanData` DTO (`fromArray`, `fromPlan`, `toAttributes`); the Filament `CreatePlan` / `EditPlan` pages call them from `handleRecordCreation` / `handleRecordUpdate`. Filament `ActivityResource` in `app/Filament/Resources/Activities/` (list only, filters by event and club, no create / edit / delete). Strings in `lang/{en,ar}/admin.php` under `audit`. Tests: `ActivityLogTest`, `PlanActivityTest`, `ActivityResourceTest`. Suite: 149 tests green. Not done: retention / pruning of old logs; club-user events were added in #17 and will be added for players in #18.
   - **Known gaps (not bugs):** the admin panel has no Arabic / RTL or locale switcher yet (ADR-003 promised it; strings already exist in `lang/*/admin.php`); a club created from the panel has its roles but **no Owner**, so nobody can log in to it until a user is added; assigning a plan always starts a new subscription from the chosen date (no renewal from the current end date); no plans are seeded.
-- **Milestone 4 (Club API Core) in progress.** Next, in this order: #40 (ADR-007 multi-sport), #18, #19, #21, #22; then M5 player subscriptions.
+- **Milestone 4 (Club API Core) in progress.** Remaining: #56 (ADR-007), #18, #19, #20, #21, #22; then M5 (#57, #58 player subscriptions and payments).
   - **#16:** migration adds `logo_path`, `contact_email`, `contact_phone`, `city`, `address` to `clubs` (all nullable). Endpoints (inside `auth:sanctum` + `tenant` + `subscription`): `GET /api/v1/club` (`ClubPolicy::view`, `ability:read,write`), `PUT /api/v1/club`, `POST /api/v1/club/logo` (multipart field `logo`), `DELETE /api/v1/club/logo` (all `ClubPolicy::update`, `abilities:write`). Domain: `UpdateClubProfileData` (DTO), `UpdateClubProfileAction`, `UpdateClubLogoAction`, `RemoveClubLogoAction`. HTTP: `Requests/Club/{UpdateClubProfileRequest,UpdateClubLogoRequest}`, `ClubController`, `ClubLogoController` (`Controllers/Api/V1/Club/`), `ClubResource` now returns the contact fields and `logo_url`. Audit events: `club.profile_updated` (only changed fields, `changes.<field>.from/to`), `club.logo_updated`, `club.logo_removed`. Tests: `ClubProfileTest`, `ClubLogoTest`, `UpdateClubProfileActionTest`. Suite: 166 tests green.
   - **Decisions (#16):** `PUT` replaces the profile (optional fields sent as `null` are cleared). `slug` never changes with the name (stable URLs). `slug`, `status` and `logo_path` are not editable through the profile `PUT`; `logo_path` is not mass-assignable and changes only through the logo Actions. Logo: jpg / jpeg / png / webp, max 2 MB, **no SVG** (can carry scripts); stored under `clubs/{id}/logo/` with a Laravel-generated name. Disk comes from `config('filesystems.club_logo_disk')` (`CLUB_LOGO_DISK`, default `public`) so the logo can move to S3 with Docker (#36) with no code change. The logo file is stored first, the DB is updated in a transaction, the old file is deleted after the commit, and the new file is deleted if the DB write fails.
   - **#17:** Staff management and invitations. Owners can list staff, invite, revoke invitations, change roles, and remove staff. Staff can view staff and invitations but cannot manage them; Coaches and Referees cannot access staff endpoints. Invitations use hashed tokens, localized email, expiry, and one-time acceptance. Coach plan limits are checked during acceptance and promotion. Audit events cover invitations, joins, role changes, and removals. Tests: `StaffActionsTest`, `StaffInvitationTest`, `StaffManagementTest`, `StaffPolicyTest`. Suite: 222 tests green.
@@ -254,7 +254,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
 
 ## M4 Club API Core
 
-Execution order: #16, #17, #40, #18, #19, #21, #22.
+Execution order: #56, #18, #19, #20, #21, #22.
 
 **#16 feat: club profile & settings** (`type:feature`, `area:api`) - DONE
 - [x] GET/PUT club profile (name, contact email / phone, city, address)
@@ -267,11 +267,11 @@ Execution order: #16, #17, #40, #18, #19, #21, #22.
 - [x] Remove staff; prevent Owner self-lockout
 - [x] `StaffPolicy` (uses `staff.view` / `staff.manage`); listing users filters by `club_id` explicitly (`User` has no global scope); cross-club tests with `TenantFixture`
 
-**#40 docs: ADR-007 multi-sport model** (`type:docs`) - NEW
+**#56 docs: ADR-007 multi-sport model** (`type:docs`) - NEW
 - [ ] Write `docs/adr/007-multi-sport.md` before any code in #18 to #21
 - [ ] Does a club offer one sport or several? Is a player enrolled in one or several?
 - [ ] Is the list of sports global (managed by the super-admin) or per club?
-- [ ] Do membership plans (#20), training groups (#21) and player subscriptions (#41) belong to a sport?
+- [ ] Do membership plans (#20), training groups (#21) and player subscriptions (#57) belong to a sport?
 - [ ] Do SaaS plan limits (players / coaches) stay per club, or count per sport?
 - [ ] How will sport-specific rules (belts, categories, weight classes, scoring, brackets) plug in later (v2.0) without changing the v1.0 core? Karate is just another sport in v1.0.
 
@@ -284,11 +284,17 @@ Execution order: #16, #17, #40, #18, #19, #21, #22.
 - [ ] Adding a player calls `EnsureWithinPlanLimitAction` inside a transaction with a lock on the club row
 
 **#19 feat: sports catalog & player enrollment** (`type:feature`, `area:api`) - REWRITTEN (was "reference data")
-- [ ] `Sport` reference data with translatable ar/en name (`spatie/laravel-translatable`), seeded; managed by the super-admin in Filament (confirm in #40)
+- [ ] `Sport` reference data with translatable ar/en name (`spatie/laravel-translatable`), seeded; managed by the super-admin in Filament (confirm in #56)
 - [ ] A club chooses the sports it offers (club-scoped endpoint)
 - [ ] Enroll a player in one or more of the club's sports
 - [ ] Policies + cross-club tests with `TenantFixture`
-- [ ] Not here: belts, age categories and weight classes (v2.0, #44)
+- [ ] Not here: belts, age categories and weight classes (v2.0, #60)
+
+**#20 feat: membership plans** (`type:feature`, `area:api`, `priority:high`) - REWRITTEN (was "player memberships & payments")
+- [ ] Club-defined membership plans per sport: name, price, duration in months (model `MembershipPlan`, not `Plan`)
+- [ ] Discounts
+- [ ] Amount calculation in an Action class with unit tests
+- [ ] Policy + cross-club tests with `TenantFixture`
 
 **#21 feat: training groups & attendance** (`type:feature`, `area:api`)
 - [ ] Training groups with sport, schedule and coach
@@ -303,19 +309,13 @@ Execution order: #16, #17, #40, #18, #19, #21, #22.
 
 (GitHub milestone renamed from "M5 Tournaments".)
 
-**#20 feat: membership plans** (`type:feature`, `area:api`, `priority:high`) - REWRITTEN (was "player memberships & payments")
-- [ ] Club-defined membership plans per sport: name, price, duration in months (model `MembershipPlan`, not `Plan`)
-- [ ] Discounts
-- [ ] Amount calculation in an Action class with unit tests
-- [ ] Policy + cross-club tests with `TenantFixture`
-
-**#41 feat: player subscriptions** (`type:feature`, `area:api`, `priority:high`) - NEW
+**#57 feat: player subscriptions** (`type:feature`, `area:api`, `priority:high`) - NEW
 - [ ] Subscribe a player to a membership plan (start and end dates)
 - [ ] Status: active, expired, cancelled
 - [ ] Renew (from the current end date) and cancel
 - [ ] Policy + cross-club tests with `TenantFixture`
 
-**#42 feat: payments & receipts** (`type:feature`, `area:api`) - NEW
+**#58 feat: payments & receipts** (`type:feature`, `area:api`) - NEW
 - [ ] Record payments against a subscription (amount in cents, method, date)
 - [ ] Partial payments and outstanding balance (Action with unit tests)
 - [ ] List of expiring and unpaid subscriptions (feeds #31 and #32)
@@ -335,7 +335,7 @@ Execution order: #16, #17, #40, #18, #19, #21, #22.
 
 **#32 feat: scheduled tasks** (`type:feature`, `area:infra`)
 - [ ] Auto-expire club subscriptions (SaaS plans)
-- [ ] Auto-expire player subscriptions (#41)
+- [ ] Auto-expire player subscriptions (#57)
 - [ ] Reminders (expiring subscriptions, unpaid balances)
 - [ ] Auto-close registration at tournament date: v2.0 (#24)
 
@@ -372,7 +372,7 @@ Execution order: #16, #17, #40, #18, #19, #21, #22.
 
 ## Post-v1.0 backlog (not scheduled)
 
-Ideas agreed on 2026-10-26. No GitHub issues yet: create them when v1.0.0 is out. "Support sports other than karate" left this list: it is part of v1.0 now (#40, #19). Nothing here is implemented, and none of it blocks the current milestones.
+Ideas agreed on 2026-10-26. No GitHub issues yet: create them when v1.0.0 is out. "Support sports other than karate" left this list: it is part of v1.0 now (#56, #19). Nothing here is implemented, and none of it blocks the current milestones.
 
 **Trial plan for new clubs**
 - [ ] A new club registered through `register-club` gets a trial plan automatically (instead of no plan).
@@ -390,4 +390,4 @@ Ideas agreed on 2026-10-26. No GitHub issues yet: create them when v1.0.0 is out
 - M1 to M3 are done; M4 is in progress (#16 and #17 done). For every new club-scoped endpoint: put it inside the `tenant` group **and its nested `subscription` group** (`RouteTenancyTest` fails otherwise), add cross-club tests with `TenantFixture`, add its policy and permissions, and add any new error or translation keys in both `en` and `ar`. Any Action that adds players or coaches calls `EnsureWithinPlanLimitAction` inside a transaction with a lock on the club row. Any new sensitive operation records an `ActivityEvent` with `RecordActivityAction` inside the Action's transaction, with the key in `en` and `ar` (ADR-006).
 - Each issue: branch, PR, Conventional Commit, tests included, `composer check` green before pushing.
 - Skip tests that only exercise the framework (e.g. "factory creates a model"); write tests for our own logic and rules.
-- First message to send in the new chat: "Continue RYADA v1.0 from the current status (start #40 ADR-007 multi-sport model)." (If a previous PR is not merged yet, say so first.)
+- First message to send in the new chat: "Continue RYADA v1.0 from the current status (start #18 players CRUD)." (If a previous PR is not merged yet, say so first.)
