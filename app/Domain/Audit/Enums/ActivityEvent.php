@@ -18,6 +18,9 @@ enum ActivityEvent: string
     case StaffJoined = 'staff.joined';
     case StaffRoleChanged = 'staff.role_changed';
     case StaffRemoved = 'staff.removed';
+    case PlayerCreated = 'player.created';
+    case PlayerUpdated = 'player.updated';
+    case PlayerDeleted = 'player.deleted';
 
     /**
      * Log name = the part before the dot (club, plan, ...).

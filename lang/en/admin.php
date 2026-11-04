@@ -87,6 +87,9 @@ return [
             'staff.joined' => 'Staff member joined',
             'staff.role_changed' => 'Staff role changed',
             'staff.removed' => 'Staff member removed',
+            'player.created' => 'Player created',
+            'player.updated' => 'Player updated',
+            'player.deleted' => 'Player deleted', 
         ],
     ],
 ];
