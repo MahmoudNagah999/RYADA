@@ -26,4 +26,8 @@ return [
     'staff.cannot_change_owner_role' => 'An Owner role cannot be changed.',
     'staff.owner_role_not_assignable' => 'The Owner role cannot be assigned through staff management.',
     'staff.last_owner_required' => 'The club must have at least one Owner.',
+    'player.national_id_invalid' => 'The national ID is not valid.',
+    'player.national_id_mismatch' => 'The birth date or gender does not match the national ID.',
+    'player.national_id_taken' => 'A player with this national ID already exists in your club.',
+    'player.birth_data_required' => 'Birth date and gender are required when no national ID is given.',
 ];

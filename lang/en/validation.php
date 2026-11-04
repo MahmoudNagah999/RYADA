@@ -296,5 +296,8 @@ return [
         'direction' => 'sort direction',
         'per_page' => 'items per page',
         'page' => 'page',
+        'national_id' => 'national ID',
+        'birth_date' => 'birth date',
     ],
+    'national_id' => 'The :attribute must be a valid Egyptian national ID.',
 ];

@@ -25,4 +25,8 @@ return [
     'staff.cannot_change_owner_role' => 'لا يمكن تغيير صلاحية مالك النادي.',
     'staff.owner_role_not_assignable' => 'لا يمكن تعيين صلاحية المالك من خلال إدارة الفريق.',
     'staff.last_owner_required' => 'يجب أن يحتفظ النادي بمالك واحد على الأقل.',
+    'player.national_id_invalid' => 'الرقم القومي غير صحيح.',
+    'player.national_id_mismatch' => 'تاريخ الميلاد أو النوع لا يطابق الرقم القومي.',
+    'player.national_id_taken' => 'يوجد لاعب بنفس الرقم القومي في ناديك.',
+    'player.birth_data_required' => 'تاريخ الميلاد والنوع مطلوبان عند عدم إدخال الرقم القومي.',
 ];

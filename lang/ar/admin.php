@@ -87,6 +87,9 @@ return [
             'staff.joined' => 'انضم عضو جديد إلى الفريق',
             'staff.role_changed' => 'تم تغيير صلاحية عضو الفريق',
             'staff.removed' => 'تمت إزالة عضو الفريق',
+            'player.created' => 'تم إنشاء لاعب',
+            'player.updated' => 'تم تعديل لاعب',
+            'player.deleted' => 'تم حذف لاعب',
         ],
     ],
 ];
