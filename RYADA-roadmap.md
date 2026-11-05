@@ -292,22 +292,24 @@ Execution order: #56, #18, #19, #20, #21, #22.
 - [x] Adding a player calls `EnsureWithinPlanLimitAction` inside a transaction with a lock on the club row
 - [x] Test: a player enrolled in several sports counts once toward the plan limit (ADR-007)
 
-**#19 feat: sports catalog & player enrollment** (`type:feature`, `area:api`) - REWRITTEN (was "reference data")
-- [ ] `Sport` reference data with translatable ar/en name (`spatie/laravel-translatable`), seeded; managed by the super-admin in Filament (confirm in #56)
-- [ ] A club chooses the sports it offers (club-scoped endpoint)
-- [ ] Enroll a player in one or more of the club's sports
-- [ ] Policies + cross-club tests with `TenantFixture`
-- [ ] Not here: belts, age categories and weight classes (v2.0, #60)
+**#19 feat: sports catalog & player enrollment** (`type:feature`, `area:api`) - DONE
+- [x] `Sport` reference data with translatable ar/en name (`spatie/laravel-translatable`), seeded; managed by the super-admin in Filament (confirm in #56)
+- [x] A club chooses the sports it offers (club-scoped endpoint)
+- [x] Enroll a player in one or more of the club's sports
+- [x] Policies + cross-club tests with `TenantFixture`
+- [x] Not here: belts, age categories and weight classes (v2.0, #60)
 
 **#20 feat: membership plans** (`type:feature`, `area:api`, `priority:high`) - REWRITTEN (was "player memberships & payments")
 - [ ] Club-defined membership plans per sport: name, price, duration in months (model `MembershipPlan`, not `Plan`)
 - [ ] Discounts
 - [ ] Amount calculation in an Action class with unit tests
 - [ ] Policy + cross-club tests with `TenantFixture`
+- [ ] DetachSportFromClubAction: block removal while the sport has active membership plans (player.sport_has_plans)
 
 **#21 feat: training groups & attendance** (`type:feature`, `area:api`)
 - [ ] Training groups with sport, schedule and coach
 - [ ] Bulk attendance endpoint
+- [ ] DetachSportFromClubAction: block removal while the sport has training groups
 
 **#22 feat: bulk import players** (`type:feature`, `area:api`)
 - [ ] Upload CSV/Excel (columns include the sport)
