@@ -21,6 +21,7 @@ enum RoleName: string
                 PermissionName::PlayersView,
                 PermissionName::PlayersManage,
                 PermissionName::TournamentsView,
+                PermissionName::MembershipPlansView,
             ],
             self::Staff => [
                 PermissionName::ClubView,
@@ -29,6 +30,8 @@ enum RoleName: string
                 PermissionName::PlayersManage,
                 PermissionName::TournamentsView,
                 PermissionName::TournamentsManage,
+                PermissionName::MembershipPlansView,
+                PermissionName::MembershipPlansManage,
             ],
             self::Referee => [
                 PermissionName::ClubView,
