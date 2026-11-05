@@ -25,6 +25,8 @@ enum ActivityEvent: string
     case SportUpdated = 'sport.updated';
     case ClubSportAdded = 'club.sport_added';
     case ClubSportRemoved = 'club.sport_removed';
+    case PlayerSportEnrolled = 'player.sport_enrolled';
+    case PlayerSportUnenrolled = 'player.sport_unenrolled';
 
     /**
      * Log name = the part before the dot (club, plan, ...).

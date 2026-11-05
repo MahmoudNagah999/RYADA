@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Club\ClubController;
 use App\Http\Controllers\Api\V1\Club\ClubLogoController;
 use App\Http\Controllers\Api\V1\Club\ClubSportController;
 use App\Http\Controllers\Api\V1\Player\PlayerController;
+use App\Http\Controllers\Api\V1\Player\PlayerSportController;
 use App\Http\Controllers\Api\V1\Sport\SportController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\Staff\StaffInvitationController;
@@ -63,6 +64,16 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
         ->middleware('abilities:write');
     Route::delete('players/{player}', [PlayerController::class, 'destroy'])
         ->whereNumber('player')
+        ->middleware('abilities:write');
+
+    Route::get('players/{player}/sports', [PlayerSportController::class, 'index'])
+        ->whereNumber('player')
+        ->middleware('ability:read,write');
+    Route::post('players/{player}/sports', [PlayerSportController::class, 'store'])
+        ->whereNumber('player')
+        ->middleware('abilities:write');
+    Route::delete('players/{player}/sports/{sport}', [PlayerSportController::class, 'destroy'])
+        ->whereNumber(['player', 'sport'])
         ->middleware('abilities:write');
 
     Route::get('club/sports', [ClubSportController::class, 'index'])->middleware('ability:read,write');

@@ -93,7 +93,9 @@ return [
             'sport.created' => 'تم إنشاء رياضة',
             'sport.updated' => 'تم تعديل رياضة',
             'club.sport_added' => 'تمت إضافة رياضة للنادي',
-            'club.sport_removed' => 'تمت إزالة رياضة من النادي'
+            'club.sport_removed' => 'تمت إزالة رياضة من النادي',
+            'player.sport_enrolled' => 'تم تسجيل لاعب في رياضة',
+            'player.sport_unenrolled' => 'تم إلغاء تسجيل لاعب من رياضة'
         ],
         'sports' => [
             'singular' => 'رياضة',
