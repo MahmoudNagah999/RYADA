@@ -32,4 +32,6 @@ return [
     'sport.inactive' => 'هذه الرياضة غير متاحة.',
     'player.sport_not_offered' => 'هذه الرياضة غير مقدَّمة في ناديك.',
     'player.sport_has_enrollments' => 'لا يزال هناك لاعبون مسجلون في هذه الرياضة. ألغِ تسجيلهم أولًا.',
+    'membership_plan.sport_not_offered' => 'ناديك لا يقدّم هذه الرياضة.',
+    'membership_plan.name_taken' => 'توجد باقة بنفس هذا الاسم لهذه الرياضة بالفعل.',
 ];

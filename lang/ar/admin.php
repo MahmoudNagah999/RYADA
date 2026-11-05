@@ -95,7 +95,9 @@ return [
             'club.sport_added' => 'تمت إضافة رياضة للنادي',
             'club.sport_removed' => 'تمت إزالة رياضة من النادي',
             'player.sport_enrolled' => 'تم تسجيل لاعب في رياضة',
-            'player.sport_unenrolled' => 'تم إلغاء تسجيل لاعب من رياضة'
+            'player.sport_unenrolled' => 'تم إلغاء تسجيل لاعب من رياضة',
+            'membership_plan.created' => 'تم إنشاء باقة اشتراك',
+            'membership_plan.updated' => 'تم تعديل باقة اشتراك'
         ],
         'sports' => [
             'singular' => 'رياضة',
