@@ -92,6 +92,8 @@ return [
             'player.deleted' => 'Player deleted',
             'sport.created' => 'Sport created',
             'sport.updated' => 'Sport updated',
+            'club.sport_added' => 'Club sport added',
+            'club.sport_removed' => 'Club sport removed'
         ],
 
         'sports' => [

@@ -298,6 +298,7 @@ return [
         'page' => 'page',
         'national_id' => 'national ID',
         'birth_date' => 'birth date',
+        'sport_id' => 'sport',
     ],
     'national_id' => 'The :attribute must be a valid Egyptian national ID.',
 ];

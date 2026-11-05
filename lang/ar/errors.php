@@ -29,4 +29,5 @@ return [
     'player.national_id_mismatch' => 'تاريخ الميلاد أو النوع لا يطابق الرقم القومي.',
     'player.national_id_taken' => 'يوجد لاعب بنفس الرقم القومي في ناديك.',
     'player.birth_data_required' => 'تاريخ الميلاد والنوع مطلوبان عند عدم إدخال الرقم القومي.',
+    'sport.inactive' => 'هذه الرياضة غير متاحة.',
 ];

@@ -30,4 +30,5 @@ return [
     'player.national_id_mismatch' => 'The birth date or gender does not match the national ID.',
     'player.national_id_taken' => 'A player with this national ID already exists in your club.',
     'player.birth_data_required' => 'Birth date and gender are required when no national ID is given.',
+    'sport.inactive' => 'This sport is not available.',
 ];

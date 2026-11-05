@@ -92,6 +92,8 @@ return [
             'player.deleted' => 'تم حذف لاعب',
             'sport.created' => 'تم إنشاء رياضة',
             'sport.updated' => 'تم تعديل رياضة',
+            'club.sport_added' => 'تمت إضافة رياضة للنادي',
+            'club.sport_removed' => 'تمت إزالة رياضة من النادي'
         ],
         'sports' => [
             'singular' => 'رياضة',
