@@ -90,6 +90,19 @@ return [
             'player.created' => 'تم إنشاء لاعب',
             'player.updated' => 'تم تعديل لاعب',
             'player.deleted' => 'تم حذف لاعب',
+            'sport.created' => 'تم إنشاء رياضة',
+            'sport.updated' => 'تم تعديل رياضة',
+        ],
+        'sports' => [
+            'singular' => 'رياضة',
+            'plural' => 'الرياضات',
+            'fields' => [
+                'name' => 'الاسم',
+                'name_en' => 'الاسم (بالإنجليزية)',
+                'name_ar' => 'الاسم (بالعربية)',
+                'slug' => 'المعرّف (slug)',
+                'is_active' => 'مفعّلة',
+            ],
         ],
     ],
 ];

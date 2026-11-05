@@ -89,7 +89,21 @@ return [
             'staff.removed' => 'Staff member removed',
             'player.created' => 'Player created',
             'player.updated' => 'Player updated',
-            'player.deleted' => 'Player deleted', 
+            'player.deleted' => 'Player deleted',
+            'sport.created' => 'Sport created',
+            'sport.updated' => 'Sport updated',
+        ],
+
+        'sports' => [
+            'singular' => 'Sport',
+            'plural' => 'Sports',
+            'fields' => [
+                'name' => 'Name',
+                'name_en' => 'Name (English)',
+                'name_ar' => 'Name (Arabic)',
+                'slug' => 'Slug',
+                'is_active' => 'Active',
+            ],
         ],
     ],
 ];
