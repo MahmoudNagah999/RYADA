@@ -94,3 +94,12 @@ Costs:
 - **Limits per sport:** closer to usage, but a player in two sports would count twice, and it complicates plans and the admin panel for no current need.
 - **Sport-specific columns or a JSON column on `Player`:** pollutes the core and weakens validation; separate module tables are typed and testable.
 - **Subscription with its own `sport_id`:** allows a subscription whose sport differs from its plan. Deriving the sport from the plan removes that inconsistency.
+
+## Implementation notes (#19)
+
+- `sports` is the global catalog (`Sport`, translatable `name`, `is_active`, no delete). The slug is set once and never changes, because v2.0 sport modules link to it.
+- `club_sport` and `player_sport` are tenant-owned (`BelongsToClub`) with unique `(club_id, sport_id)` and `(player_id, sport_id)`. Deleting a player cascades its enrollments; deleting a sport is restricted.
+- Club sports: `POST /club/sports` and `DELETE /club/sports/{sport}` (Owner only, `ClubPolicy::update`), `GET /club/sports` and `GET /sports` (active catalog).
+- Player enrollment: `GET|POST /players/{player}/sports`, `DELETE /players/{player}/sports/{sport}` (`PlayerPolicy`).
+- Attaching or enrolling is idempotent. An inactive sport cannot be newly attached or enrolled; clubs that already offer it keep it.
+- A sport cannot be removed from a club while players are enrolled (`player.sport_has_enrollments`). The checks for membership plans (#20) and training groups (#21) are added with their tables.

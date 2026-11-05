@@ -89,7 +89,25 @@ return [
             'staff.removed' => 'Staff member removed',
             'player.created' => 'Player created',
             'player.updated' => 'Player updated',
-            'player.deleted' => 'Player deleted', 
+            'player.deleted' => 'Player deleted',
+            'sport.created' => 'Sport created',
+            'sport.updated' => 'Sport updated',
+            'club.sport_added' => 'Club sport added',
+            'club.sport_removed' => 'Club sport removed',
+            'player.sport_enrolled' => 'Player enrolled in sport',
+            'player.sport_unenrolled' => 'Player unenrolled from sport'
+        ],
+
+        'sports' => [
+            'singular' => 'Sport',
+            'plural' => 'Sports',
+            'fields' => [
+                'name' => 'Name',
+                'name_en' => 'Name (English)',
+                'name_ar' => 'Name (Arabic)',
+                'slug' => 'Slug',
+                'is_active' => 'Active',
+            ],
         ],
     ],
 ];
