@@ -35,4 +35,5 @@ return [
     'membership_plan.sport_not_offered' => 'ناديك لا يقدّم هذه الرياضة.',
     'membership_plan.name_taken' => 'توجد باقة بنفس هذا الاسم لهذه الرياضة بالفعل.',
     'membership_plan.discount_invalid' => 'الخصم غير صالح لهذا السعر.',
+    'membership_plan.sport_has_active_plans' => 'لا تزال هناك باقات اشتراك مفعّلة لهذه الرياضة. قم بتعطيلها أولًا.',
 ];
