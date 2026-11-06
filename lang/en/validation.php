@@ -299,6 +299,9 @@ return [
         'national_id' => 'national ID',
         'birth_date' => 'birth date',
         'sport_id' => 'sport',
+        'price_cents' => 'price',
+        'duration_months' => 'duration (months)',
+        'is_active' => 'active'
     ],
     'national_id' => 'The :attribute must be a valid Egyptian national ID.',
 ];

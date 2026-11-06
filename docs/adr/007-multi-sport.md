@@ -103,3 +103,13 @@ Costs:
 - Player enrollment: `GET|POST /players/{player}/sports`, `DELETE /players/{player}/sports/{sport}` (`PlayerPolicy`).
 - Attaching or enrolling is idempotent. An inactive sport cannot be newly attached or enrolled; clubs that already offer it keep it.
 - A sport cannot be removed from a club while players are enrolled (`player.sport_has_enrollments`). The checks for membership plans (#20) and training groups (#21) are added with their tables.
+
+## Implementation notes (#20)
+
+- `MembershipPlan` is tenant-owned (`BelongsToClub`) and lives in `App\Domain\Membership`. It is not the SaaS `Plan`.
+- Required `sport_id`, immutable after creation. The sport must be offered by the club and active when the plan is created. Name is unique per `(club_id, sport_id)`.
+- Price in cents, currency `EGP` for now, `duration_months` 1 to 60. No delete: plans are deactivated with `is_active`.
+- Editing a plan never touches existing subscriptions, which snapshot price, currency and duration (#57).
+- New permissions `membership_plans.view` (Owner, Staff, Coach) and `membership_plans.manage` (Owner, Staff). A migration re-syncs roles of existing clubs.
+- Discounts are not stored on the plan. `CalculateMembershipAmountAction` computes price, discount and total from a price in cents and an optional percent (0 to 100, half up) or fixed discount; #57 calls it when subscribing a player.
+- A sport cannot be removed from a club while it has enrolled players or active membership plans (`membership_plan.sport_has_active_plans`). The training groups check is added in #21.

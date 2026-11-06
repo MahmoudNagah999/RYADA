@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Auth\RegisterClubController;
 use App\Http\Controllers\Api\V1\Club\ClubController;
 use App\Http\Controllers\Api\V1\Club\ClubLogoController;
 use App\Http\Controllers\Api\V1\Club\ClubSportController;
+use App\Http\Controllers\Api\V1\Membership\MembershipPlanController;
 use App\Http\Controllers\Api\V1\Player\PlayerController;
 use App\Http\Controllers\Api\V1\Player\PlayerSportController;
 use App\Http\Controllers\Api\V1\Sport\SportController;
@@ -83,4 +84,13 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
         ->middleware('abilities:write');
 
     Route::get('sports', [SportController::class, 'index'])->middleware('ability:read,write');
+
+    Route::get('membership-plans', [MembershipPlanController::class, 'index'])->middleware('ability:read,write');
+    Route::post('membership-plans', [MembershipPlanController::class, 'store'])->middleware('abilities:write');
+    Route::get('membership-plans/{plan}', [MembershipPlanController::class, 'show'])
+        ->whereNumber('plan')
+        ->middleware('ability:read,write');
+    Route::put('membership-plans/{plan}', [MembershipPlanController::class, 'update'])
+        ->whereNumber('plan')
+        ->middleware('abilities:write');
 });

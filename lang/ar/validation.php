@@ -299,6 +299,9 @@ return [
         'national_id' => 'الرقم القومي',
         'birth_date' => 'تاريخ الميلاد',
         'sport_id' => 'الرياضة',
+        'price_cents' => 'السعر',
+        'duration_months' => 'المدة (بالشهور)',
+        'is_active' => 'مفعّلة'
     ],
     'national_id' => 'يجب أن يكون :attribute رقمًا قوميًا مصريًا صحيحًا.',
 ];

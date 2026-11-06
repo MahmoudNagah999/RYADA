@@ -13,4 +13,6 @@ enum PermissionName: string
     case TournamentsView = 'tournaments.view';
     case TournamentsManage = 'tournaments.manage';
     case ScoresSubmit = 'scores.submit';
+    case MembershipPlansView = 'membership_plans.view';
+    case MembershipPlansManage = 'membership_plans.manage';
 }
