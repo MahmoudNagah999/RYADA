@@ -34,4 +34,5 @@ return [
     'player.sport_has_enrollments' => 'لا يزال هناك لاعبون مسجلون في هذه الرياضة. ألغِ تسجيلهم أولًا.',
     'membership_plan.sport_not_offered' => 'ناديك لا يقدّم هذه الرياضة.',
     'membership_plan.name_taken' => 'توجد باقة بنفس هذا الاسم لهذه الرياضة بالفعل.',
+    'membership_plan.discount_invalid' => 'الخصم غير صالح لهذا السعر.',
 ];

@@ -35,4 +35,5 @@ return [
     'player.sport_has_enrollments' => 'This sport still has enrolled players. Unenroll them first.',
     'membership_plan.sport_not_offered' => 'Your club does not offer this sport.',
     'membership_plan.name_taken' => 'A membership plan with this name already exists for this sport.',
+    'membership_plan.discount_invalid' => 'The discount is not valid for this price.',
 ];
