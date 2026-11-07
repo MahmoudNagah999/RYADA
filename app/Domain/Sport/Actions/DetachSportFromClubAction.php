@@ -10,6 +10,7 @@ use App\Domain\Shared\Exceptions\BusinessRuleException;
 use App\Domain\Shared\Tenancy\CurrentClub;
 use App\Domain\Sport\Models\ClubSport;
 use App\Domain\Sport\Models\PlayerSport;
+use App\Domain\Training\Models\TrainingGroup;
 use Illuminate\Support\Facades\DB;
 
 class DetachSportFromClubAction
@@ -28,14 +29,18 @@ class DetachSportFromClubAction
                     ->where('sport_id', $sportId)
                     ->firstOrFail();
 
-                // ADR-007: a sport cannot be removed while it still has enrollments or active membership plans.
-                // TODO #21: also block on training groups.
+                // ADR-007: a sport cannot be removed while it still has enrollments, active membership
+                // plans or active training groups. Inactive plans and groups do not block (they have no delete).
                 if (PlayerSport::query()->where('sport_id', $sportId)->exists()) {
                     throw new BusinessRuleException('player.sport_has_enrollments', [], 422);
                 }
 
                 if (MembershipPlan::query()->where('sport_id', $sportId)->where('is_active', true)->exists()) {
                     throw new BusinessRuleException('membership_plan.sport_has_active_plans', [], 422);
+                }
+
+                if (TrainingGroup::query()->where('sport_id', $sportId)->where('is_active', true)->exists()) {
+                    throw new BusinessRuleException('training_group.sport_has_groups', [], 422);
                 }
 
                 $slug = $clubSport->sport->slug;

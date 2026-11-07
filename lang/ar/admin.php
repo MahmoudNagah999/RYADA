@@ -97,7 +97,12 @@ return [
             'player.sport_enrolled' => 'تم تسجيل لاعب في رياضة',
             'player.sport_unenrolled' => 'تم إلغاء تسجيل لاعب من رياضة',
             'membership_plan.created' => 'تم إنشاء باقة اشتراك',
-            'membership_plan.updated' => 'تم تعديل باقة اشتراك'
+            'membership_plan.updated' => 'تم تعديل باقة اشتراك',
+            'training_group.created' => 'تم إنشاء مجموعة تدريب',
+            'training_group.updated' => 'تم تعديل مجموعة تدريب',
+            'training_group.player_added' => 'تمت إضافة لاعب إلى مجموعة تدريب',
+            'training_group.player_removed' => 'تمت إزالة لاعب من مجموعة تدريب',
+            'training_group.attendance_recorded' => 'تم تسجيل حضور التدريب',
         ],
         'sports' => [
             'singular' => 'رياضة',

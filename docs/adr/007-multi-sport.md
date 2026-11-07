@@ -113,3 +113,6 @@ Costs:
 - New permissions `membership_plans.view` (Owner, Staff, Coach) and `membership_plans.manage` (Owner, Staff). A migration re-syncs roles of existing clubs.
 - Discounts are not stored on the plan. `CalculateMembershipAmountAction` computes price, discount and total from a price in cents and an optional percent (0 to 100, half up) or fixed discount; #57 calls it when subscribing a player.
 - A sport cannot be removed from a club while it has enrolled players or active membership plans (`membership_plan.sport_has_active_plans`). The training groups check is added in #21.
+- `TrainingGroup` belongs to one sport (`sport_id`, immutable) and the sport must be offered by the club and active. Players join through `training_group_player` and must be enrolled in the group's sport.
+- A sport cannot be removed from a club while the club has **active** training groups for it. Together with #19 (enrollments) and #20 (active membership plans) the removal rule is complete.
+- A player cannot be unenrolled from a sport while they are in a group of that sport; they must be removed from the group first.

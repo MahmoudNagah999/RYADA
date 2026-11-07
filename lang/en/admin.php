@@ -97,7 +97,12 @@ return [
             'player.sport_enrolled' => 'Player enrolled in sport',
             'player.sport_unenrolled' => 'Player unenrolled from sport',
             'membership_plan.created' => 'Membership plan created',
-            'membership_plan.updated' => 'Membership plan updated'
+            'membership_plan.updated' => 'Membership plan updated',
+            'training_group.created' => 'Training group created',
+            'training_group.updated' => 'Training group updated',
+            'training_group.player_added' => 'Player added to training group',
+            'training_group.player_removed' => 'Player removed from training group',
+            'training_group.attendance_recorded' => 'Training attendance recorded',
         ],
 
         'sports' => [

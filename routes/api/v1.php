@@ -12,6 +12,9 @@ use App\Http\Controllers\Api\V1\Player\PlayerSportController;
 use App\Http\Controllers\Api\V1\Sport\SportController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\Staff\StaffInvitationController;
+use App\Http\Controllers\Api\V1\Training\TrainingAttendanceController;
+use App\Http\Controllers\Api\V1\Training\TrainingGroupController;
+use App\Http\Controllers\Api\V1\Training\TrainingGroupPlayerController;
 use Illuminate\Support\Facades\Route;
 
 // Convention: read routes use `ability:read,write` (any of); write routes use `abilities:write`.
@@ -92,5 +95,31 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
         ->middleware('ability:read,write');
     Route::put('membership-plans/{plan}', [MembershipPlanController::class, 'update'])
         ->whereNumber('plan')
+        ->middleware('abilities:write');
+
+    Route::get('training-groups', [TrainingGroupController::class, 'index'])->middleware('ability:read,write');
+    Route::post('training-groups', [TrainingGroupController::class, 'store'])->middleware('abilities:write');
+    Route::get('training-groups/{group}', [TrainingGroupController::class, 'show'])
+        ->whereNumber('group')
+        ->middleware('ability:read,write');
+    Route::put('training-groups/{group}', [TrainingGroupController::class, 'update'])
+        ->whereNumber('group')
+        ->middleware('abilities:write');
+
+    Route::get('training-groups/{group}/players', [TrainingGroupPlayerController::class, 'index'])
+        ->whereNumber('group')
+        ->middleware('ability:read,write');
+    Route::post('training-groups/{group}/players', [TrainingGroupPlayerController::class, 'store'])
+        ->whereNumber('group')
+        ->middleware('abilities:write');
+    Route::delete('training-groups/{group}/players/{player}', [TrainingGroupPlayerController::class, 'destroy'])
+        ->whereNumber(['group', 'player'])
+        ->middleware('abilities:write');
+
+    Route::get('training-groups/{group}/attendance', [TrainingAttendanceController::class, 'index'])
+        ->whereNumber('group')
+        ->middleware('ability:read,write');
+    Route::post('training-groups/{group}/attendance', [TrainingAttendanceController::class, 'store'])
+        ->whereNumber('group')
         ->middleware('abilities:write');
 });
