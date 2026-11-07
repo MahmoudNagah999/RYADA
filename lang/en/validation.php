@@ -301,7 +301,16 @@ return [
         'sport_id' => 'sport',
         'price_cents' => 'price',
         'duration_months' => 'duration (months)',
-        'is_active' => 'active'
+        'is_active' => 'active',
+        'coach_id' => 'coach',
+        'schedules' => 'schedule',
+        'schedules.*.day_of_week' => 'day of week',
+        'schedules.*.start_time' => 'start time',
+        'schedules.*.end_time' => 'end time',
+        'player_id' => 'player',
+        'records' => 'attendance records',
+        'records.*.player_id' => 'player',
+        'records.*.status' => 'status',
     ],
     'national_id' => 'The :attribute must be a valid Egyptian national ID.',
 ];

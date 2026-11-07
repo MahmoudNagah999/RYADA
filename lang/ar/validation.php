@@ -301,7 +301,16 @@ return [
         'sport_id' => 'الرياضة',
         'price_cents' => 'السعر',
         'duration_months' => 'المدة (بالشهور)',
-        'is_active' => 'مفعّلة'
+        'is_active' => 'مفعّلة',
+        'coach_id' => 'المدرب',
+        'schedules' => 'جدول التدريب',
+        'schedules.*.day_of_week' => 'اليوم',
+        'schedules.*.start_time' => 'وقت البداية',
+        'schedules.*.end_time' => 'وقت النهاية',
+        'player_id' => 'اللاعب',
+        'records' => 'سجلات الحضور',
+        'records.*.player_id' => 'اللاعب',
+        'records.*.status' => 'الحالة',
     ],
     'national_id' => 'يجب أن يكون :attribute رقمًا قوميًا مصريًا صحيحًا.',
 ];
