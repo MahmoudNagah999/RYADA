@@ -23,12 +23,12 @@ Repo: `github.com/MahmoudNagah999/RYADA`
 ## Decisions made
 - **Scope split v1.0 / v2.0 (decided 2026-10-28):**
   - **v1.0 = multi-sport club management with player subscriptions.** A club offers one or more sports; players are enrolled in sports; membership plans, player subscriptions and payments; training groups and attendance; staff; the SaaS side (plans, admin panel, audit log); Redis, notifications and scheduled jobs; quality and release.
-  - **v2.0 = everything karate-specific and tournaments:** belts, age categories and weight classes, tournaments and registration, kumite brackets, kata scoring, results and certificates, live scoreboard (Reverb). Plan in `RYADA-roadmap-v2.0.md`; GitHub milestones `V2-M1` to `V2-M4`.
+  - **v2.0 = everything karate-specific and tournaments:** belts, age categories and weight classes, tournaments and registration, kumite brackets, kata scoring, results and certificates, live scoreboard (Reverb), and the karate bulk import of players (#22, moved 2026-11-08). Plan in `RYADA-roadmap-v2.0.md`; GitHub milestones `V2-M1` to `V2-M4`.
   - In v1.0 karate is just one more sport in the catalog (#19): no belts, no weight classes, no tournaments. `Player` has no belt or weight (#18).
   - Already built and kept: roles (`referee`) and permissions (`tournaments.*`, `scores.submit`) from #7, and the empty `Tournament` domain folder. Nothing is removed; they are used from v2.0.
   - Design first: ADR-007 (#56) decides the multi-sport model before #18 to #21 are built. Sport-specific rules for v2.0 are designed in ADR-008 (#59), not now.
   - Naming: club membership plans are `MembershipPlan` (#20), never `Plan`, which is the SaaS plan of the platform (#13).
-  - Issue numbers: #23 to #28 and #30 moved to v2.0; #19 and #20 were rewritten; #56, #57 and #58 were added to v1.0 and #59 to #61 to v2.0.
+  - Issue numbers: #22 to #28 and #30 moved to v2.0 (#22 as a karate-only bulk import); #19 and #20 were rewritten; #56, #57 and #58 were added to v1.0 and #59 to #61 to v2.0.
 - **Stack:** Laravel 13 (PHP 8.4), MySQL, REST APIs, Pest, Sanctum. Redis only where genuinely needed (Milestone 6). Reverb comes with the live scoreboard in v2.0.
 - **Admin panel:** Filament, for the super-admin (platform owner). Separate guard, no auth sharing with the API.
 - **Club dashboard:** API only (`/api/v1`), consumed by a mobile/web client (Flutter dev collaborates with me).
@@ -120,7 +120,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
   - **Decision (#14):** a club with no plan, a plan limit of `null`, or a null `subscription_ends_at` is **not restricted**. New clubs register without a plan, so blocking them would lock them out on day one. Revisit with the trial plan (Post-v1.0 backlog below).
   - **#15:** audit log with `spatie/laravel-activitylog` (ADR-006). New domain `App\Domain\Audit` (`Actions/RecordActivityAction`, `Enums/ActivityEvent`, `Models/Activity`); our own model is set in `activity_model` of `config/activitylog.php`. A migration adds `activity_log.club_id` (nullable FK, `nullOnDelete`, composite index with `created_at`). Events recorded: `club.created` (inside `CreateClubAction`, so register-club and the admin panel both log it), `club.suspended`, `club.activated`, `club.plan_assigned`, `plan.created`, `plan.updated`. `SuspendClubAction`, `ActivateClubAction`, `AssignPlanToClubAction` and `CreateClubAction` take `RecordActivityAction` in the constructor and write the log inside a `DB::transaction`. `CreatePlanAction` / `UpdatePlanAction` with the `PlanData` DTO (`fromArray`, `fromPlan`, `toAttributes`); the Filament `CreatePlan` / `EditPlan` pages call them from `handleRecordCreation` / `handleRecordUpdate`. Filament `ActivityResource` in `app/Filament/Resources/Activities/` (list only, filters by event and club, no create / edit / delete). Strings in `lang/{en,ar}/admin.php` under `audit`. Tests: `ActivityLogTest`, `PlanActivityTest`, `ActivityResourceTest`. Not done: retention / pruning of old logs.
   - **Known gaps (not bugs):** the admin panel has no Arabic / RTL or locale switcher yet (ADR-003 promised it; strings already exist in `lang/*/admin.php`); a club created from the panel has its roles but **no Owner**, so nobody can log in to it until a user is added; assigning a plan always starts a new subscription from the chosen date (no renewal from the current end date); no plans are seeded.
-- **Milestone 4 (Club API Core) in progress.** Done: #16, #17, #56, #18, #19, #20, #21. Next, in this order: #22; then M5 player subscriptions (#57, #58). **Confirm the #20 and #21 PRs are merged before starting #22.** Suite: 346 tests green at the end of #20, 419 at the end of #21.
+- **Milestone 4 (Club API Core) is complete and merged:** #16, #17, #56, #18, #19, #20, #21. **#22 (bulk import players) was moved to v2.0 on 2026-11-08 and made karate-only** (it belongs with belts and weight). Next: M5 player subscriptions (#57, #58). Suite: 419 tests green at the end of #21.
   - **#16:** migration adds `logo_path`, `contact_email`, `contact_phone`, `city`, `address` to `clubs` (all nullable). Endpoints (inside `auth:sanctum` + `tenant` + `subscription`): `GET /api/v1/club` (`ClubPolicy::view`, `ability:read,write`), `PUT /api/v1/club`, `POST /api/v1/club/logo` (multipart field `logo`), `DELETE /api/v1/club/logo` (all `ClubPolicy::update`, `abilities:write`). Domain: `UpdateClubProfileData` (DTO), `UpdateClubProfileAction`, `UpdateClubLogoAction`, `RemoveClubLogoAction`. HTTP: `Requests/Club/{UpdateClubProfileRequest,UpdateClubLogoRequest}`, `ClubController`, `ClubLogoController` (`Controllers/Api/V1/Club/`), `ClubResource` returns the contact fields and `logo_url`. Audit events: `club.profile_updated` (only changed fields, `changes.<field>.from/to`), `club.logo_updated`, `club.logo_removed`. Tests: `ClubProfileTest`, `ClubLogoTest`, `UpdateClubProfileActionTest`.
   - **Decisions (#16):** `PUT` replaces the profile (optional fields sent as `null` are cleared). `slug` never changes with the name (stable URLs). `slug`, `status` and `logo_path` are not editable through the profile `PUT`; `logo_path` is not mass-assignable and changes only through the logo Actions. Logo: jpg / jpeg / png / webp, max 2 MB, **no SVG** (can carry scripts); stored under `clubs/{id}/logo/` with a Laravel-generated name. Disk comes from `config('filesystems.club_logo_disk')` (`CLUB_LOGO_DISK`, default `public`) so the logo can move to S3 with Docker (#36) with no code change. The logo file is stored first, the DB is updated in a transaction, the old file is deleted after the commit, and the new file is deleted if the DB write fails.
   - **#17:** Staff management and invitations. Owners can list staff, invite, revoke invitations, change roles, and remove staff. Staff can view staff and invitations but cannot manage them; Coaches and Referees cannot access staff endpoints. Invitations use hashed tokens, localized email, expiry, and one-time acceptance. Coach plan limits are checked during acceptance and promotion. Audit events cover invitations, joins, role changes, and removals. Tests: `StaffActionsTest`, `StaffInvitationTest`, `StaffManagementTest`, `StaffPolicyTest`.
@@ -136,7 +136,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
     - **Audit events:** `sport.created`, `sport.updated` (platform-level, `club_id` null), `club.sport_added`, `club.sport_removed`, `player.sport_enrolled`, `player.sport_unenrolled`. Error codes (en + ar): `sport.inactive`, `player.sport_not_offered`, `player.sport_has_enrollments`.
     - Tests: `SportActionsTest`, `SportResourceTest`, `ClubSportApiTest`, `PlayerSportApiTest`. Suite: 300 tests green.
     - **Decisions (#19):** separate attach / detach endpoints instead of a full sync (each rule and audit event applies to one sport at a time); only Owners change the club's sports, no new permissions; the slug of a sport is immutable after creation (v2.0 modules link to it); deleting a player cascades its enrollments, and blocking deletion for players with subscriptions is #57's job; the "cannot remove a sport" rule is completed per table: #20 added the membership plans check and #21 added the training groups check to `DetachSportFromClubAction` (both done).
-  - **#20 (membership plans):** new domain `App\Domain\Membership`.
+  - **#20 (membership plans, merged):** new domain `App\Domain\Membership`.
     - **Permissions:** `PermissionName::MembershipPlansView` (`membership_plans.view`) and `MembershipPlansManage` (`membership_plans.manage`). Owner: both, Staff: both, Coach: view, Referee: none. A migration re-runs `SyncClubRolesAction` for existing clubs and clears the permission cache.
     - **Model:** `membership_plans` (`club_id` cascade, `sport_id` restrict, `name` plain string, `price_cents` unsigned int, `currency` default `EGP`, `duration_months`, `is_active`; unique `(club_id, sport_id, name)`, index `(club_id, is_active)`). `MembershipPlan` (uses `BelongsToClub`, `#[UseFactory]`, `#[UsePolicy]`), `MembershipPlanFactory` (with `inactive()`), `MembershipPlanPolicy` (`viewAny` / `create` check only the permission, `view` / `update` also check the same club).
     - **Actions + DTOs:** `CreateMembershipPlanData`, `UpdateMembershipPlanData` (no `sportId`), `CreateMembershipPlanAction` (sport must be offered by the club and active; duplicate name rejected by a check and by catching `UniqueConstraintViolationException`; audit in the same transaction), `UpdateMembershipPlanAction` (only real changes logged under `changes.<field>.from/to`; the sport never changes), `ListMembershipPlansAction` (filters `sport_id`, `is_active`, no pagination, sorted by sport then name).
@@ -144,9 +144,9 @@ Repo: `github.com/MahmoudNagah999/RYADA`
     - **Endpoints** (inside `tenant` + `subscription`): `GET /api/v1/membership-plans` (`viewAny`), `POST /membership-plans` (`create`), `GET /membership-plans/{plan}` (`view`), `PUT /membership-plans/{plan}` (`update`; replaces `name`, `price_cents`, `duration_months`, `is_active`; `sport_id` is `prohibited`). HTTP: `Requests/Membership/{ListMembershipPlansRequest,StoreMembershipPlanRequest,UpdateMembershipPlanRequest}` (authorization in `authorize()`; for an unknown plan the request returns `true` and the controller answers `404`), `MembershipPlanResource`, `Controllers/Api/V1/Membership/MembershipPlanController`.
     - **Rules:** `duration_months` 1 to 60, `price_cents` 0 to 100000000, name max 100. Plans have no delete; editing a plan never touches existing subscriptions (they snapshot price, currency and duration, #57). A sport cannot be removed from a club while it has active plans; inactive plans do not block it and other clubs' plans are ignored. `Sport` domain code now depends on `Membership` (domain to domain, allowed).
     - **Audit events:** `membership_plan.created`, `membership_plan.updated`. Error codes (en + ar): `membership_plan.sport_not_offered`, `membership_plan.name_taken`, `membership_plan.discount_invalid`, `membership_plan.sport_has_active_plans`.
-    - Tests: `MembershipPlanPolicyTest`, `MembershipPlanActionsTest`, `CalculateMembershipAmountActionTest` (unit), `MembershipPlanApiTest`, `MembershipSportDetachTest`.
+    - Tests: `MembershipPlanPolicyTest`, `MembershipPlanActionsTest`, `CalculateMembershipAmountActionTest` (unit), `MembershipPlanApiTest`, `MembershipSportDetachTest`. Suite: 346 tests green.
     - **Decisions (#20):** separate permissions for plans because prices are more sensitive than player data; discounts are applied at subscription time, not stored on the plan (stored promotions with validity dates are out of scope); currency is `EGP` only for now (no `currency` in the requests); plan name is plain text, not translatable (like player and club names).
-  - **#21 (training groups & attendance):** same domain `App\Domain\Training`.
+  - **#21 (training groups & attendance, merged):** same domain folder `App\Domain\Training`.
     - **Tables:** `training_groups` (`club_id` cascade, `sport_id` restrict, `coach_id` nullable FK to `users` with `nullOnDelete`, `name`, `is_active`; unique `(club_id, sport_id, name)`, index `(club_id, is_active)`), `training_group_schedules` (`day_of_week` 0 = Sunday to 6 = Saturday like Carbon, `start_time`, `end_time`; unique `(training_group_id, day_of_week, start_time)`), `training_group_player` (unique `(training_group_id, player_id)`), `training_attendances` (`date` with cast `date:Y-m-d`, `status`, nullable `recorded_by`; unique `(training_group_id, player_id, date)`). All tenant-owned (`BelongsToClub`). Enums `DayOfWeek`, `AttendanceStatus` (`present`, `absent`, `excused`). Models `TrainingGroup` (`#[UseFactory]`, `#[UsePolicy]`), `TrainingGroupSchedule`, `TrainingGroupPlayer`, `TrainingAttendance` with factories for groups, schedules and attendance.
     - **Permissions:** `training_groups.view/manage` (Owner and Staff both, Coach view, Referee none) and `attendance.view/record` (Owner, Staff, Coach, Referee none). Two migrations re-run `SyncClubRolesAction` for existing clubs. `TrainingGroupPolicy::viewAttendance / recordAttendance`: same club + permission + (`training_groups.manage` or the user is the group's coach), so a Coach handles only their own groups.
     - **Groups:** `CreateTrainingGroupAction` / `UpdateTrainingGroupAction` with `CreateTrainingGroupData` (carries `clubId`), `UpdateTrainingGroupData`, `ScheduleSlotData`; `ListTrainingGroupsAction` (filters `sport_id`, `is_active`, no pagination); `ValidateScheduleSlotsAction` (pure: a slot ends after it starts, same-day slots do not overlap, back-to-back allowed) and `EnsureUserIsClubCoachAction`. The sport must be offered and active and never changes (`sport_id` is `prohibited` on `PUT`); the coach role is checked only when the coach is assigned or changed; `PUT` replaces the weekly schedule; no-change saves are not logged. Endpoints `GET|POST /training-groups`, `GET|PUT /training-groups/{group}`. HTTP: `Requests/Training/{TrainingGroupFormRequest,StoreTrainingGroupRequest,UpdateTrainingGroupRequest,ListTrainingGroupsRequest}`, `TrainingGroupResource`, `Controllers/Api/V1/Training/TrainingGroupController`.
@@ -156,6 +156,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
     - **Audit events:** `training_group.created`, `.updated` (only real changes), `.player_added`, `.player_removed`, `.attendance_recorded` (one per bulk call: date and counts, no player data). Error codes (en + ar): `training_group.sport_not_offered`, `.name_taken`, `.coach_invalid`, `.schedule_invalid`, `.schedule_overlap`, `.inactive`, `.player_not_enrolled`, `.sport_has_groups`, `player.sport_has_groups`, `attendance.date_in_future`, `attendance.player_not_in_group`.
     - Tests: `TrainingGroupPolicyTest`, `AttendancePolicyTest`, `ValidateScheduleSlotsActionTest` (unit), `TrainingGroupApiTest`, `TrainingGroupPlayerApiTest`, `TrainingAttendanceApiTest`. Suite: 419 tests green.
     - **Decisions (#21):** players join groups through `training_group_player` (several groups allowed); no delete for groups (deactivate with `is_active`); inactive groups do not block removing a sport; attendance permissions are separate so a coach records attendance without editing groups; any past date is allowed (makeup sessions) and the date need not match the schedule; the sheet shows current members only (attendance of players who left stays in the table); one club-wide timezone setting for now, per-club timezone is in the backlog.
+  - **Decision (#22, 2026-11-08):** bulk import of players moves to v2.0 and is scoped to karate only (karate players with belt and weight). It is not part of v1.0. Clubs add players one by one through `POST /players` in v1.0.
 
 ## Technical notes (learned so far)
 - Pest tests: Symfony adds `Accept-Language: en-us,en` to every test request. To test "no header", pass `['Accept-Language' => '']`.
@@ -301,9 +302,9 @@ Repo: `github.com/MahmoudNagah999/RYADA`
 - [x] Browse logs in the admin panel (read-only, filters by event and club)
 - [x] ADR-006 + README section
 
-## M4 Club API Core
+## M4 Club API Core - DONE
 
-Execution order: #56, #18, #19, #20, #21, #22.
+Execution order (done): #56, #18, #19, #20, #21. #22 moved to v2.0.
 
 **#16 feat: club profile & settings** (`type:feature`, `area:api`) - DONE
 - [x] GET/PUT club profile (name, contact email / phone, city, address)
@@ -351,7 +352,7 @@ Execution order: #56, #18, #19, #20, #21, #22.
 - [x] Policy + cross-club tests with `TenantFixture`
 - [x] ADR-007 implementation notes
 
-**#21 feat: training groups & attendance** (`type:feature`, `area:api`) - DONE (PR open, confirm merge)
+**#21 feat: training groups & attendance** (`type:feature`, `area:api`) - DONE
 - [x] Training groups with sport, schedule and coach
 - [x] Players in groups (`training_group_player`), only if enrolled in the group's sport
 - [x] `DetachSportFromClubAction`: block removal while the sport has active training groups (`training_group.sport_has_groups`)
@@ -360,23 +361,22 @@ Execution order: #56, #18, #19, #20, #21, #22.
 - [x] Policy + permissions + cross-club tests with `TenantFixture`
 - [x] ADR-007 implementation notes
 
-**#22 feat: bulk import players** (`type:feature`, `area:api`)
-- [ ] Upload CSV/Excel (columns include the sport)
-- [ ] Process as a queued Job + status endpoint
-- [ ] Report of rejected rows and reasons
+**#22 feat: bulk import players** - MOVED TO v2.0 (karate-only, decided 2026-11-08)
+- Not part of v1.0. Planned in `RYADA-roadmap-v2.0.md` (V2-M1) as a bulk import of karate players (belt and weight columns).
+- Scope to keep: upload CSV/Excel, queued Job + status endpoint, report of rejected rows and reasons.
 
 ## M5 Player Subscriptions
 
 (GitHub milestone renamed from "M5 Tournaments".)
 
-**#57 feat: player subscriptions** (`type:feature`, `area:api`, `priority:high`) - NEW
+**#57 feat: player subscriptions** (`type:feature`, `area:api`, `priority:high`) - NEXT
 - [ ] Subscribe a player to a membership plan (start and end dates); snapshot price, currency and duration; compute the amount with `CalculateMembershipAmountAction` (optional percent / fixed discount)
 - [ ] Status: active, expired, cancelled
 - [ ] Renew (from the current end date) and cancel
 - [ ] Block deleting a player who has subscriptions (`DELETE /players/{player}` is a hard delete today)
 - [ ] Policy + cross-club tests with `TenantFixture`
 
-**#58 feat: payments & receipts** (`type:feature`, `area:api`) - NEW
+**#58 feat: payments & receipts** (`type:feature`, `area:api`, `priority:high`) - NEW
 - [ ] Record payments against a subscription (amount in cents, method, date)
 - [ ] Partial payments and outstanding balance (Action with unit tests)
 - [ ] List of expiring and unpaid subscriptions (feeds #31 and #32)
@@ -451,7 +451,7 @@ Ideas agreed on 2026-10-26. No GitHub issues yet: create them when v1.0.0 is out
 ---
 
 ## Implementation notes
-- M1 to M3 are done; M4 is in progress (#16 to #21 and #56 done). For every new club-scoped endpoint: put it inside the `tenant` group **and its nested `subscription` group** (`RouteTenancyTest` fails otherwise), add cross-club tests with `TenantFixture`, add its policy and permissions, and add any new error or translation keys in both `en` and `ar`. Any Action that adds players or coaches calls `EnsureWithinPlanLimitAction` inside a transaction with a lock on the club row. Any new sensitive operation records an `ActivityEvent` with `RecordActivityAction` inside the Action's transaction, with the key in `en` and `ar` (ADR-006).
+- M1 to M4 are done (#22 moved to v2.0); M5 is next (#57, #58). For every new club-scoped endpoint: put it inside the `tenant` group **and its nested `subscription` group** (`RouteTenancyTest` fails otherwise), add cross-club tests with `TenantFixture`, add its policy and permissions, and add any new error or translation keys in both `en` and `ar`. Any Action that adds players or coaches calls `EnsureWithinPlanLimitAction` inside a transaction with a lock on the club row. Any new sensitive operation records an `ActivityEvent` with `RecordActivityAction` inside the Action's transaction, with the key in `en` and `ar` (ADR-006).
 - Each issue: branch, PR, Conventional Commit, tests included, `composer check` green before pushing.
 - Skip tests that only exercise the framework (e.g. "factory creates a model"); write tests for our own logic and rules.
-- First message to send in the new chat: "Continue RYADA v1.0 from the current status (start #22 bulk import players)." (If the #20 or #21 PR is not merged yet, say so first.)
+- First message to send in the new chat: "Continue RYADA v1.0 from the current status (start #57 player subscriptions)."
