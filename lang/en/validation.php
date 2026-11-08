@@ -317,6 +317,13 @@ return [
         'discount' => 'discount',
         'discount.type' => 'discount type',
         'discount.value' => 'discount value',
+        'amount_cents' => 'amount',
+        'method' => 'payment method',
+        'paid_on' => 'payment date',
+        'reference' => 'reference',
+        'note' => 'note',
+        'refunded_on' => 'refund date',
+        'expiring_within_days' => 'expiring within days',
     ],
     'national_id' => 'The :attribute must be a valid Egyptian national ID.',
 ];

@@ -55,4 +55,11 @@ return [
     'player_subscription.cannot_renew_cancelled' => 'A cancelled subscription cannot be renewed.',
     'player_subscription.already_cancelled' => 'This subscription is already cancelled.',
     'player.has_subscriptions' => 'This player has subscriptions and cannot be deleted. Cancel them first.',
+    'payment.subscription_cancelled' => 'A cancelled subscription cannot receive payments.',
+    'payment.exceeds_outstanding' => 'The amount exceeds the outstanding balance of :outstanding cents.',
+    'payment.date_in_future' => 'The payment date cannot be in the future.',
+    'payment.already_voided' => 'This payment is already voided.',
+    'payment.void_has_refunds' => 'A payment with refunds cannot be voided.',
+    'payment.voided' => 'This payment has been voided.',
+    'payment.refund_exceeds_payment' => 'The refund exceeds the refundable amount of :refundable cents.',
 ];

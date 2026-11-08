@@ -317,6 +317,13 @@ return [
         'discount' => 'الخصم',
         'discount.type' => 'نوع الخصم',
         'discount.value' => 'قيمة الخصم',
+        'amount_cents' => 'المبلغ',
+        'method' => 'طريقة الدفع',
+        'paid_on' => 'تاريخ الدفع',
+        'reference' => 'المرجع',
+        'note' => 'ملاحظة',
+        'refunded_on' => 'تاريخ الاسترداد',
+        'expiring_within_days' => 'عدد أيام الانتهاء',
     ],
     'national_id' => 'يجب أن يكون :attribute رقمًا قوميًا مصريًا صحيحًا.',
 ];

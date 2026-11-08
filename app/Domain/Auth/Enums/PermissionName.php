@@ -21,4 +21,7 @@ enum PermissionName: string
     case AttendanceRecord = 'attendance.record';
     case PlayerSubscriptionsView = 'player_subscriptions.view';
     case PlayerSubscriptionsManage = 'player_subscriptions.manage';
+    case PaymentsView = 'payments.view';
+    case PaymentsManage = 'payments.manage';
+    case PaymentsRefund = 'payments.refund';
 }

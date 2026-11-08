@@ -37,6 +37,9 @@ enum ActivityEvent: string
     case PlayerSubscriptionCreated = 'player_subscription.created';
     case PlayerSubscriptionRenewed = 'player_subscription.renewed';
     case PlayerSubscriptionCancelled = 'player_subscription.cancelled';
+    case PaymentRecorded = 'payment.recorded';
+    case PaymentVoided = 'payment.voided';
+    case PaymentRefunded = 'payment.refunded';
 
     /**
      * Log name = the part before the dot (club, plan, ...).

@@ -106,6 +106,9 @@ return [
             'player_subscription.created' => 'تم إنشاء اشتراك لاعب',
             'player_subscription.renewed' => 'تم تجديد اشتراك لاعب',
             'player_subscription.cancelled' => 'تم إلغاء اشتراك لاعب',
+            'payment.recorded' => 'تم تسجيل دفعة',
+            'payment.voided' => 'تم إلغاء دفعة',
+            'payment.refunded' => 'تم استرداد مبلغ من دفعة',
         ],
         'sports' => [
             'singular' => 'رياضة',
