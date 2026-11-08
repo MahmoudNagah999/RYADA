@@ -311,6 +311,12 @@ return [
         'records' => 'attendance records',
         'records.*.player_id' => 'player',
         'records.*.status' => 'status',
+        'membership_plan_id' => 'membership plan',
+        'starts_on' => 'start date',
+        'ends_on' => 'end date',
+        'discount' => 'discount',
+        'discount.type' => 'discount type',
+        'discount.value' => 'discount value',
     ],
     'national_id' => 'The :attribute must be a valid Egyptian national ID.',
 ];

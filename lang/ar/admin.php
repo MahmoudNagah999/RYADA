@@ -103,6 +103,9 @@ return [
             'training_group.player_added' => 'تمت إضافة لاعب إلى مجموعة تدريب',
             'training_group.player_removed' => 'تمت إزالة لاعب من مجموعة تدريب',
             'training_group.attendance_recorded' => 'تم تسجيل حضور التدريب',
+            'player_subscription.created' => 'تم إنشاء اشتراك لاعب',
+            'player_subscription.renewed' => 'تم تجديد اشتراك لاعب',
+            'player_subscription.cancelled' => 'تم إلغاء اشتراك لاعب',
         ],
         'sports' => [
             'singular' => 'رياضة',

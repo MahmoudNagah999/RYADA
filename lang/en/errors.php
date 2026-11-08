@@ -48,4 +48,11 @@ return [
     'player.sport_has_groups' => 'The player is still in a training group of this sport. Remove them from the group first.',
     'attendance.date_in_future' => 'Attendance cannot be recorded for a future date.',
     'attendance.player_not_in_group' => 'Every player must be a member of this training group.',
+    'player_subscription.plan_inactive' => 'This membership plan is not active.',
+    'player_subscription.player_not_enrolled' => 'The player must be enrolled in the sport of this plan first.',
+    'player_subscription.overlap' => 'The player already has a non-cancelled subscription to this plan for an overlapping period.',
+    'player_subscription.not_cancellable' => 'Only an active subscription can be cancelled.',
+    'player_subscription.cannot_renew_cancelled' => 'A cancelled subscription cannot be renewed.',
+    'player_subscription.already_cancelled' => 'This subscription is already cancelled.',
+    'player.has_subscriptions' => 'This player has subscriptions and cannot be deleted. Cancel them first.',
 ];

@@ -47,4 +47,11 @@ return [
     'player.sport_has_groups' => 'اللاعب ما زال في مجموعة تدريب لهذه الرياضة. قم بإزالته من المجموعة أولًا.',
     'attendance.date_in_future' => 'لا يمكن تسجيل الحضور لتاريخ في المستقبل.',
     'attendance.player_not_in_group' => 'يجب أن يكون كل لاعب عضوًا في مجموعة التدريب هذه.',
+    'player_subscription.plan_inactive' => 'باقة الاشتراك هذه غير مفعّلة.',
+    'player_subscription.player_not_enrolled' => 'يجب تسجيل اللاعب في رياضة هذه الباقة أولًا.',
+    'player_subscription.overlap' => 'لدى اللاعب بالفعل اشتراك غير ملغى في هذه الباقة خلال فترة متداخلة.',
+    'player_subscription.not_cancellable' => 'لا يمكن إلغاء إلا الاشتراك النشط.',
+    'player_subscription.cannot_renew_cancelled' => 'لا يمكن تجديد اشتراك ملغى.',
+    'player_subscription.already_cancelled' => 'هذا الاشتراك ملغى بالفعل.',
+    'player.has_subscriptions' => 'لدى هذا اللاعب اشتراكات ولا يمكن حذفه. قم بإلغائها أولًا.',
 ];

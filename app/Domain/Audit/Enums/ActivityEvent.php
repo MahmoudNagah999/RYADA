@@ -34,6 +34,9 @@ enum ActivityEvent: string
     case TrainingGroupPlayerAdded = 'training_group.player_added';
     case TrainingGroupPlayerRemoved = 'training_group.player_removed';
     case TrainingGroupAttendanceRecorded = 'training_group.attendance_recorded';
+    case PlayerSubscriptionCreated = 'player_subscription.created';
+    case PlayerSubscriptionRenewed = 'player_subscription.renewed';
+    case PlayerSubscriptionCancelled = 'player_subscription.cancelled';
 
     /**
      * Log name = the part before the dot (club, plan, ...).

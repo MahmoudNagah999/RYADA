@@ -103,6 +103,9 @@ return [
             'training_group.player_added' => 'Player added to training group',
             'training_group.player_removed' => 'Player removed from training group',
             'training_group.attendance_recorded' => 'Training attendance recorded',
+            'player_subscription.created' => 'Player subscription created',
+            'player_subscription.renewed' => 'Player subscription renewed',
+            'player_subscription.cancelled' => 'Player subscription cancelled',
         ],
 
         'sports' => [

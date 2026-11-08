@@ -19,4 +19,6 @@ enum PermissionName: string
     case TrainingGroupsManage = 'training_groups.manage';
     case AttendanceView = 'attendance.view';
     case AttendanceRecord = 'attendance.record';
+    case PlayerSubscriptionsView = 'player_subscriptions.view';
+    case PlayerSubscriptionsManage = 'player_subscriptions.manage';
 }

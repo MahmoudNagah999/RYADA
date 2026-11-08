@@ -116,3 +116,13 @@ Costs:
 - `TrainingGroup` belongs to one sport (`sport_id`, immutable) and the sport must be offered by the club and active. Players join through `training_group_player` and must be enrolled in the group's sport.
 - A sport cannot be removed from a club while the club has **active** training groups for it. Together with #19 (enrollments) and #20 (active membership plans) the removal rule is complete.
 - A player cannot be unenrolled from a sport while they are in a group of that sport; they must be removed from the group first.
+
+## Implementation notes (#57)
+
+- `PlayerSubscription` is tenant-owned (`BelongsToClub`) and lives in `App\Domain\PlayerSubscription`. It is not the SaaS `Subscription`.
+- It has no `sport_id` of its own: the sport comes from its membership plan, and the Action checks that the player is enrolled in that sport.
+- Price, currency and duration are snapshotted at subscription time; renewing copies the plan's **current** values without rewriting the previous row. Editing a plan never changes past subscriptions.
+- `ends_on` is exclusive: a subscription is valid while `today < ends_on`. The status (`active`, `expired`, `cancelled`) is computed, not stored, so a period flips to `expired` as time passes without any job.
+- Overlap is rejected only for a non-cancelled subscription to the **same** plan using the half-open interval test `existing.starts_on < new.ends_on AND existing.ends_on > new.starts_on`. Back-to-back periods and subscriptions to other plans are allowed.
+- A player cannot be deleted while any subscription exists (any status); the FK `restrictOnDelete` is only the database backstop.
+- New permissions `player_subscriptions.view` (Owner, Staff, Coach) and `player_subscriptions.manage` (Owner, Staff); a migration re-syncs the roles of existing clubs.
