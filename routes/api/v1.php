@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\V1\Club\ClubController;
 use App\Http\Controllers\Api\V1\Club\ClubLogoController;
 use App\Http\Controllers\Api\V1\Club\ClubSportController;
 use App\Http\Controllers\Api\V1\Membership\MembershipPlanController;
+use App\Http\Controllers\Api\V1\Payment\DueSubscriptionController;
+use App\Http\Controllers\Api\V1\Payment\PaymentController;
+use App\Http\Controllers\Api\V1\Payment\SubscriptionBalanceController;
 use App\Http\Controllers\Api\V1\Player\PlayerController;
 use App\Http\Controllers\Api\V1\Player\PlayerSportController;
 use App\Http\Controllers\Api\V1\PlayerSubscription\PlayerSubscriptionController;
@@ -90,6 +93,9 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
 
     Route::get('player-subscriptions', [PlayerSubscriptionController::class, 'index'])
         ->middleware('ability:read,write');
+    // Registered before the `{subscription}` route so "due" is never treated as an id.
+    Route::get('player-subscriptions/due', [DueSubscriptionController::class, 'index'])
+        ->middleware('ability:read,write');
     Route::get('player-subscriptions/{subscription}', [PlayerSubscriptionController::class, 'show'])
         ->whereNumber('subscription')
         ->middleware('ability:read,write');
@@ -98,6 +104,26 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
         ->middleware('abilities:write');
     Route::post('player-subscriptions/{subscription}/cancel', [PlayerSubscriptionController::class, 'cancel'])
         ->whereNumber('subscription')
+        ->middleware('abilities:write');
+
+    Route::get('player-subscriptions/{subscription}/payments', [PaymentController::class, 'index'])
+        ->whereNumber('subscription')
+        ->middleware('ability:read,write');
+    Route::post('player-subscriptions/{subscription}/payments', [PaymentController::class, 'store'])
+        ->whereNumber('subscription')
+        ->middleware('abilities:write');
+    Route::get('player-subscriptions/{subscription}/balance', [SubscriptionBalanceController::class, 'show'])
+        ->whereNumber('subscription')
+        ->middleware('ability:read,write');
+
+    Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])
+        ->whereNumber('payment')
+        ->middleware('ability:read,write');
+    Route::post('payments/{payment}/void', [PaymentController::class, 'void'])
+        ->whereNumber('payment')
+        ->middleware('abilities:write');
+    Route::post('payments/{payment}/refunds', [PaymentController::class, 'refund'])
+        ->whereNumber('payment')
         ->middleware('abilities:write');
 
     Route::get('club/sports', [ClubSportController::class, 'index'])->middleware('ability:read,write');

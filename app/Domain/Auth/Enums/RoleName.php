@@ -38,6 +38,8 @@ enum RoleName: string
                 PermissionName::MembershipPlansManage,
                 PermissionName::PlayerSubscriptionsView,
                 PermissionName::PlayerSubscriptionsManage,
+                PermissionName::PaymentsView,
+                PermissionName::PaymentsManage,
                 PermissionName::TrainingGroupsView,
                 PermissionName::TrainingGroupsManage,
                 PermissionName::AttendanceView,

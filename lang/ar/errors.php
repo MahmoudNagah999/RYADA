@@ -54,4 +54,11 @@ return [
     'player_subscription.cannot_renew_cancelled' => 'لا يمكن تجديد اشتراك ملغى.',
     'player_subscription.already_cancelled' => 'هذا الاشتراك ملغى بالفعل.',
     'player.has_subscriptions' => 'لدى هذا اللاعب اشتراكات ولا يمكن حذفه. قم بإلغائها أولًا.',
+    'payment.subscription_cancelled' => 'لا يمكن تسجيل دفعات على اشتراك ملغى.',
+    'payment.exceeds_outstanding' => 'المبلغ يتجاوز الرصيد المستحق البالغ :outstanding قرشًا.',
+    'payment.date_in_future' => 'لا يمكن أن يكون تاريخ الدفعة في المستقبل.',
+    'payment.already_voided' => 'هذه الدفعة ملغاة بالفعل.',
+    'payment.void_has_refunds' => 'لا يمكن إلغاء دفعة عليها استردادات.',
+    'payment.voided' => 'تم إلغاء هذه الدفعة.',
+    'payment.refund_exceeds_payment' => 'مبلغ الاسترداد يتجاوز المبلغ القابل للاسترداد البالغ :refundable قرشًا.',
 ];

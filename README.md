@@ -89,6 +89,14 @@ Sensitive operations are recorded with `spatie/laravel-activitylog` and browsabl
 - Platform-level events (such as plan changes) have no club (`club_id = null`).
 - Never put passwords, tokens or national IDs in the event properties.
 
+## Payments and receipts
+
+- Money is always stored as integer cents.
+- Payments are immutable: there is no update and no delete endpoint. A payment can be voided once, and only while it has no refunds. A refund is a separate immutable record, allowed on active, expired and cancelled subscriptions as long as the payment is not voided.
+- Receipt and refund numbers are allocated per club through `DocumentSequence`, so they never collide between clubs and are never reused.
+- Payment status (`unpaid`, `partial`, `paid`, `refunded`) is computed from the subscription total and the non-voided payments and their refunds. It is never stored.
+- PDF receipts are postponed; `GET /api/v1/payments/{payment}/receipt` returns the receipt data as JSON.
+
 ## Architecture decisions
 
 - [ADR-001: Tenancy strategy](docs/adr/001-tenancy-strategy.md)

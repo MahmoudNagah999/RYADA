@@ -106,6 +106,9 @@ return [
             'player_subscription.created' => 'Player subscription created',
             'player_subscription.renewed' => 'Player subscription renewed',
             'player_subscription.cancelled' => 'Player subscription cancelled',
+            'payment.recorded' => 'Payment recorded',
+            'payment.voided' => 'Payment voided',
+            'payment.refunded' => 'Payment refunded',
         ],
 
         'sports' => [
