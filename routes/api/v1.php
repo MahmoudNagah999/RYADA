@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Club\ClubSportController;
 use App\Http\Controllers\Api\V1\Membership\MembershipPlanController;
 use App\Http\Controllers\Api\V1\Player\PlayerController;
 use App\Http\Controllers\Api\V1\Player\PlayerSportController;
+use App\Http\Controllers\Api\V1\PlayerSubscription\PlayerSubscriptionController;
 use App\Http\Controllers\Api\V1\Sport\SportController;
 use App\Http\Controllers\Api\V1\Staff\StaffController;
 use App\Http\Controllers\Api\V1\Staff\StaffInvitationController;
@@ -78,6 +79,25 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
         ->middleware('abilities:write');
     Route::delete('players/{player}/sports/{sport}', [PlayerSportController::class, 'destroy'])
         ->whereNumber(['player', 'sport'])
+        ->middleware('abilities:write');
+
+    Route::get('players/{player}/subscriptions', [PlayerSubscriptionController::class, 'indexForPlayer'])
+        ->whereNumber('player')
+        ->middleware('ability:read,write');
+    Route::post('players/{player}/subscriptions', [PlayerSubscriptionController::class, 'store'])
+        ->whereNumber('player')
+        ->middleware('abilities:write');
+
+    Route::get('player-subscriptions', [PlayerSubscriptionController::class, 'index'])
+        ->middleware('ability:read,write');
+    Route::get('player-subscriptions/{subscription}', [PlayerSubscriptionController::class, 'show'])
+        ->whereNumber('subscription')
+        ->middleware('ability:read,write');
+    Route::post('player-subscriptions/{subscription}/renew', [PlayerSubscriptionController::class, 'renew'])
+        ->whereNumber('subscription')
+        ->middleware('abilities:write');
+    Route::post('player-subscriptions/{subscription}/cancel', [PlayerSubscriptionController::class, 'cancel'])
+        ->whereNumber('subscription')
         ->middleware('abilities:write');
 
     Route::get('club/sports', [ClubSportController::class, 'index'])->middleware('ability:read,write');

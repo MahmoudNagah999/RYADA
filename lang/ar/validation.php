@@ -311,6 +311,12 @@ return [
         'records' => 'سجلات الحضور',
         'records.*.player_id' => 'اللاعب',
         'records.*.status' => 'الحالة',
+        'membership_plan_id' => 'باقة الاشتراك',
+        'starts_on' => 'تاريخ البداية',
+        'ends_on' => 'تاريخ النهاية',
+        'discount' => 'الخصم',
+        'discount.type' => 'نوع الخصم',
+        'discount.value' => 'قيمة الخصم',
     ],
     'national_id' => 'يجب أن يكون :attribute رقمًا قوميًا مصريًا صحيحًا.',
 ];
