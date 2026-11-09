@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Domain\Sport\Models\ClubSport;
+use App\Domain\Sport\DTOs\ClubSportView;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin ClubSport
+ * @mixin ClubSportView
  */
 class ClubSportResource extends JsonResource
 {
@@ -17,11 +17,11 @@ class ClubSportResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'sport_id' => $this->sport_id,
+            'sport_id' => $this->sport->id,
             'slug' => $this->sport->slug,
-            'name' => $this->sport->name,
-            'is_active' => $this->sport->is_active,
-            'added_at' => $this->created_at->toIso8601String(),
+            'name' => $this->sport->name(app()->getLocale(), (string) config('app.fallback_locale')),
+            'is_active' => $this->sport->isActive,
+            'added_at' => $this->addedAt,
         ];
     }
 }
