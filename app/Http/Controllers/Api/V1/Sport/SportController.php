@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Sport;
 
-use App\Domain\Sport\Models\Sport;
+use App\Domain\Sport\Cache\SportCatalog;
 use App\Http\Resources\SportResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -10,12 +10,10 @@ use Illuminate\Support\Facades\Gate;
 
 class SportController
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request, SportCatalog $catalog): AnonymousResourceCollection
     {
         Gate::authorize('view', $request->user()->club);
 
-        return SportResource::collection(
-            Sport::query()->where('is_active', true)->orderBy('slug')->get(),
-        );
+        return SportResource::collection($catalog->active());
     }
 }

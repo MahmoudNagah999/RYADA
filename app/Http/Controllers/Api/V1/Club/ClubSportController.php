@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api\V1\Club;
 
 use App\Domain\Sport\Actions\AttachSportToClubAction;
 use App\Domain\Sport\Actions\DetachSportFromClubAction;
-use App\Domain\Sport\Models\ClubSport;
+use App\Domain\Sport\Cache\ClubSportList;
+use App\Domain\Sport\DTOs\ClubSportView;
 use App\Domain\Sport\Models\Sport;
 use App\Http\Requests\Club\AttachClubSportRequest;
 use App\Http\Resources\ClubSportResource;
@@ -16,16 +17,11 @@ use Illuminate\Support\Facades\Gate;
 
 class ClubSportController
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request, ClubSportList $list): AnonymousResourceCollection
     {
-        $club = $request->user()->club;
-        Gate::authorize('view', $club);
+        Gate::authorize('view', $request->user()->club);
 
-        $sports = ClubSport::query()->with('sport')->get()
-            ->sortBy(fn (ClubSport $clubSport) => $clubSport->sport->slug)
-            ->values();
-
-        return ClubSportResource::collection($sports);
+        return ClubSportResource::collection($list->forCurrentClub());
     }
 
     public function store(AttachClubSportRequest $request, AttachSportToClubAction $action): JsonResponse
@@ -35,7 +31,7 @@ class ClubSportController
 
         $clubSport = $action->execute($club, $sport)->load('sport');
 
-        return (new ClubSportResource($clubSport))
+        return (new ClubSportResource(ClubSportView::fromModel($clubSport)))
             ->response()
             ->setStatusCode($clubSport->wasRecentlyCreated ? 201 : 200);
     }

@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Domain\Sport\Models\Sport;
+use App\Domain\Sport\DTOs\SportSummary;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin Sport
+ * @mixin SportSummary
  */
 class SportResource extends JsonResource
 {
@@ -19,7 +19,7 @@ class SportResource extends JsonResource
         return [
             'id' => $this->id,
             'slug' => $this->slug,
-            'name' => $this->name,
+            'name' => $this->name(app()->getLocale(), (string) config('app.fallback_locale')),
         ];
     }
 }

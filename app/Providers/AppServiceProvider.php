@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use App\Domain\Shared\Tenancy\CurrentClub;
+use App\Domain\Sport\Cache\ClubSportObserver;
+use App\Domain\Sport\Cache\SportCatalogObserver;
+use App\Domain\Sport\Models\ClubSport;
+use App\Domain\Sport\Models\Sport;
 use App\Models\Admin;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -32,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(fn ($user) => $user instanceof Admin ? true : null);
 
         $this->configureRateLimiting();
+
+        Sport::observe(SportCatalogObserver::class);
+        ClubSport::observe(ClubSportObserver::class);
     }
 
     private function configureRateLimiting(): void

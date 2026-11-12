@@ -15,6 +15,8 @@ class StaffInvitationMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    public int $tries = 3;
+
     public function __construct(
         public readonly string $acceptUrl,
         public readonly string $clubName,
@@ -39,5 +41,13 @@ class StaffInvitationMail extends Mailable implements ShouldQueue
                 'expiresAt' => $this->expiresAt->toDateString(),
             ],
         );
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function backoff(): array
+    {
+        return [10, 60];
     }
 }

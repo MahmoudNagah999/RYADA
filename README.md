@@ -80,6 +80,36 @@ The API speaks Arabic and English. See [ADR-003](docs/adr/003-localization.md).
 - Errors have a stable `code` and a translated `message`. Branch on `code`, not `message`.
 - Rule: never hardcode user-facing strings. Add the key to both `lang/en` and `lang/ar`; CI checks that they match.
 
+## Caching, queues and Redis
+
+Redis serves the cache, the queue and the rate limiter. Design and reasons: [ADR-009](docs/adr/009-caching-and-queues.md).
+
+**Rules for contributors**
+- Club-specific cache data goes through `TenantCache` only (keys are `club:{id}:{name}`); never build a key by hand.
+- Clear a cache entry from a model observer that runs after commit, not inside the transaction.
+- Cache plain arrays, never Eloquent models.
+- A queued job that works on a club's data extends `TenantQueuedJob` and takes `clubId` plus plain ids, never a tenant-owned model. `QueueRulesTest` fails otherwise.
+- Tests use the `array` cache and the `sync` queue; they never need Redis.
+
+**Local setup (Windows)**
+```
+docker run -d --name ryada-redis -p 6379:6379 redis:7
+composer install --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
+```
+
+**.env**:
+```
+REDIS_CLIENT=predis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
+CACHE_PREFIX=ryada-local-cache-
+REDIS_PREFIX=ryada-local-
+HORIZON_PREFIX=ryada-local-horizon:
+```
+Run a worker in a second terminal with `php artisan queue:work redis --tries=3`. After changing code, run `php artisan queue:restart`. Horizon needs Linux (`pcntl`), so it runs in the Docker setup; its dashboard is `/horizon`, for the super-admin only.
+
 ## Audit log
 
 Sensitive operations are recorded with `spatie/laravel-activitylog` and browsable (read-only) in the admin panel under **Audit log**, with filters by event and club. See [ADR-006](docs/adr/006-audit-log.md).
