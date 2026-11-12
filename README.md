@@ -127,6 +127,17 @@ Sensitive operations are recorded with `spatie/laravel-activitylog` and browsabl
 - Payment status (`unpaid`, `partial`, `paid`, `refunded`) is computed from the subscription total and the non-voided payments and their refunds. It is never stored.
 - PDF receipts are postponed; `GET /api/v1/payments/{payment}/receipt` returns the receipt data as JSON.
 
+## Notifications
+
+The bell is the only channel: notifications are rows in the `notifications` table, readable through `/api/v1/notifications`. No mail, and no per-user preferences yet.
+
+- **Stored, not translated:** a row holds a stable `code` (`club.welcome`, `subscription.expiring`, `subscription.unpaid`) plus its `params`. The API builds `message` at read time with the locale of the request, exactly like API errors, so switching language re-translates old notifications.
+- **Recipients:** the users of the club holding the `owner` or `staff` role. Coaches and referees never receive notifications.
+- **Not queued, the job is:** a database notification is a single insert, so the notification classes are written synchronously. `SendDueSubscriptionNotificationsJob` (one per club, a `TenantQueuedJob`) runs inside the club context and can be re-run safely.
+- **Dedup:** a recipient never gets the same `dedup_key` twice. Expiring notifications are keyed by subscription and end date; unpaid ones by subscription and ISO week, so the reminder repeats at most once a week. An unpaid subscription is only chased once it started at least `NOTIFY_UNPAID_GRACE_DAYS` days ago, and expiring ones only look `NOTIFY_EXPIRING_DAYS` ahead (see `config/club_notifications.php`).
+- **Command:** `php artisan club:notify-due` dispatches one job per club; `--club=ID` limits it to one club. Scheduling arrives in #32.
+- Notifications are deleted with the user when a staff member is removed from the club.
+
 ## Architecture decisions
 
 - [ADR-001: Tenancy strategy](docs/adr/001-tenancy-strategy.md)

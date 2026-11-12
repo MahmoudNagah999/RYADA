@@ -60,6 +60,10 @@ class RemoveStaffAction
                 );
 
                 $staffMember->tokens()->delete();
+
+                // Morph rows have no foreign key, so they would survive the user otherwise.
+                $staffMember->notifications()->delete();
+
                 $staffMember->syncRoles([]);
                 $staffMember->delete();
             } finally {

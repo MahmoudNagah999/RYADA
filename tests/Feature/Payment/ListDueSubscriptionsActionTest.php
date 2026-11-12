@@ -2,6 +2,7 @@
 
 use App\Domain\Membership\Models\MembershipPlan;
 use App\Domain\Payment\Actions\ListDueSubscriptionsAction;
+use App\Domain\Payment\DTOs\DueSubscriptionData;
 use App\Domain\Payment\DTOs\ListDueSubscriptionsData;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Payment\Models\PaymentRefund;
@@ -111,4 +112,30 @@ it('excludes voided payments and the refunds recorded against them', function ()
         ->and($rows[0]->balance->refundedCents)->toBe(5000)
         ->and($rows[0]->balance->netPaidCents)->toBe(15000)
         ->and($rows[0]->balance->outstandingCents)->toBe(35000);
+});
+
+it('reads the page from the DTO instead of the request', function () {
+    Carbon::setTestNow(Carbon::parse('2026-06-01 09:00:00', 'UTC'));
+
+    $tenant = TenantFixture::create();
+
+    foreach (range(1, 5) as $ignored) {
+        payDueSubscription($tenant);
+    }
+
+    $idsOnPage = fn (int $page): array => array_map(
+        fn (DueSubscriptionData $row): int => $row->subscription->id,
+        payDueInClub($tenant, fn () => app(ListDueSubscriptionsAction::class)->execute(
+            new ListDueSubscriptionsData('all', 7, 2, $page),
+        ))->items(),
+    );
+
+    expect(request()->query('page'))->toBeNull();
+
+    $firstPage = $idsOnPage(1);
+    $secondPage = $idsOnPage(2);
+
+    expect($firstPage)->toHaveCount(2)
+        ->and($secondPage)->toHaveCount(2)
+        ->and($firstPage)->not->toEqual($secondPage);
 });

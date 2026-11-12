@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Club\ClubController;
 use App\Http\Controllers\Api\V1\Club\ClubLogoController;
 use App\Http\Controllers\Api\V1\Club\ClubSportController;
 use App\Http\Controllers\Api\V1\Membership\MembershipPlanController;
+use App\Http\Controllers\Api\V1\Notification\NotificationController;
 use App\Http\Controllers\Api\V1\Payment\DueSubscriptionController;
 use App\Http\Controllers\Api\V1\Payment\PaymentController;
 use App\Http\Controllers\Api\V1\Payment\SubscriptionBalanceController;
@@ -160,6 +161,17 @@ Route::middleware(['auth:sanctum', 'tenant', 'subscription'])->group(function ()
         ->middleware('abilities:write');
     Route::delete('training-groups/{group}/players/{player}', [TrainingGroupPlayerController::class, 'destroy'])
         ->whereNumber(['group', 'player'])
+        ->middleware('abilities:write');
+
+    // `unread-count` and `read-all` are registered before `{notification}` so they are never
+    // taken for an id; the id itself is constrained to a UUID.
+    Route::get('notifications', [NotificationController::class, 'index'])->middleware('ability:read,write');
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])
+        ->middleware('ability:read,write');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])
+        ->middleware('abilities:write');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])
+        ->whereUuid('notification')
         ->middleware('abilities:write');
 
     Route::get('training-groups/{group}/attendance', [TrainingAttendanceController::class, 'index'])

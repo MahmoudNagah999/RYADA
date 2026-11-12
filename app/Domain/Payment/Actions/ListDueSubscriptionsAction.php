@@ -59,7 +59,7 @@ class ListDueSubscriptionsAction
         $paginator = $query
             ->orderBy('player_subscriptions.ends_on')
             ->orderBy('player_subscriptions.id')
-            ->paginate($data->perPage);
+            ->paginate($data->perPage, ['*'], 'page', $data->page);
 
         /** @var LengthAwarePaginator<int, DueSubscriptionData> $result */
         $result = $paginator->through(function (PlayerSubscription $subscription): DueSubscriptionData {
