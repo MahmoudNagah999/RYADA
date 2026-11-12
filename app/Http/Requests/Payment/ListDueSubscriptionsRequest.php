@@ -40,6 +40,7 @@ class ListDueSubscriptionsRequest extends FormRequest
             type: $this->string('type', 'all')->toString(),
             expiringWithinDays: $this->integer('expiring_within_days', 7),
             perPage: min($this->integer('per_page', self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE),
+            page: $this->integer('page', 1),
         );
     }
 }

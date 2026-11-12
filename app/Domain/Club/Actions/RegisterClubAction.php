@@ -6,6 +6,7 @@ use App\Domain\Auth\DTOs\LoginResult;
 use App\Domain\Auth\Enums\RoleName;
 use App\Domain\Club\DTOs\RegisterClubData;
 use App\Domain\Club\Models\Club;
+use App\Domain\Notification\Notifications\WelcomeClubNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -28,6 +29,9 @@ class RegisterClubAction
             $user->save();
 
             $this->assignOwnerRole($user, $club);
+
+            // Inside the same transaction: a rolled-back registration leaves no notification.
+            $user->notify(new WelcomeClubNotification($club->name));
 
             $token = $user->createToken('api', ['*'])->plainTextToken;
 
