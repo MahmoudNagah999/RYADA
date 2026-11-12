@@ -51,7 +51,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
   ```
   - Domain code never depends on `App\Http` (enforced by a Pest arch test).
   - Policies and factories are registered explicitly with `#[UsePolicy]` / `#[UseFactory]` on the model (auto-discovery does not look inside domain folders).
-  - A domain folder is created with its first issue, not in advance. Existing: `Shared`, `Club`, `Player`, `Tournament`, `Auth` (created in #6), `Subscription`, `Audit`, `Sport` (created in #19), `Membership` (created in #20), `Training` (created in #21), `PlayerSubscription` (created in #57), `Payment` (created in #58). `Tournament` stays empty until v2.0.
+  - A domain folder is created with its first issue, not in advance. Existing: `Shared`, `Club`, `Player`, `Tournament`, `Auth` (created in #6), `Subscription`, `Audit`, `Sport` (created in #19), `Membership` (created in #20), `Training` (created in #21), `PlayerSubscription` (created in #57), `Payment` (created in #58), `Notification` (created in #31). `Tournament` stays empty until v2.0.
   - `User` stays in `App\Models` (Laravel default, `config/auth.php` points to it).
 - **Auth (#6):**
   - Sanctum personal access tokens. Endpoints under `/api/v1/auth`: `POST login`, `POST register-club` (public), `POST logout`, `GET me` (authenticated).
@@ -122,7 +122,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
   - **Known gaps (not bugs):** the admin panel has no Arabic / RTL or locale switcher yet (ADR-003 promised it; strings already exist in `lang/*/admin.php`); a club created from the panel has its roles but **no Owner**, so nobody can log in to it until a user is added; assigning a plan always starts a new subscription from the chosen date (no renewal from the current end date); no plans are seeded.
 - **Milestone 4 (Club API Core) is complete and merged:** #16, #17, #56, #18, #19, #20, #21. **#22 (bulk import players) was moved to v2.0 on 2026-11-08 and made karate-only** (it belongs with belts and weight). Suite: 419 tests green at the end of #21.
 - **Milestone 5 (Player Subscriptions) is complete and merged:** #57, #58. Suite: 466 tests green at the end of #57, 506 at the end of #58.
-- **Milestone 6 (Redis & Background Jobs) in progress:** #29 done and merged. Next: #31 notifications, then #32 scheduled tasks. Suite: 538 tests green at the end of #29 (check the exact number with `php artisan test`).
+- **Milestone 6 (Redis & Background Jobs) in progress:** #29 and #31 done. Next: #32 scheduled tasks. Suite: 538 tests green at the end of #29, 561 at the end of #31 (check the exact number with `php artisan test`).
   - **#16:** migration adds `logo_path`, `contact_email`, `contact_phone`, `city`, `address` to `clubs` (all nullable). Endpoints (inside `auth:sanctum` + `tenant` + `subscription`): `GET /api/v1/club` (`ClubPolicy::view`, `ability:read,write`), `PUT /api/v1/club`, `POST /api/v1/club/logo` (multipart field `logo`), `DELETE /api/v1/club/logo` (all `ClubPolicy::update`, `abilities:write`). Domain: `UpdateClubProfileData` (DTO), `UpdateClubProfileAction`, `UpdateClubLogoAction`, `RemoveClubLogoAction`. HTTP: `Requests/Club/{UpdateClubProfileRequest,UpdateClubLogoRequest}`, `ClubController`, `ClubLogoController` (`Controllers/Api/V1/Club/`), `ClubResource` returns the contact fields and `logo_url`. Audit events: `club.profile_updated` (only changed fields, `changes.<field>.from/to`), `club.logo_updated`, `club.logo_removed`. Tests: `ClubProfileTest`, `ClubLogoTest`, `UpdateClubProfileActionTest`.
   - **Decisions (#16):** `PUT` replaces the profile (optional fields sent as `null` are cleared). `slug` never changes with the name (stable URLs). `slug`, `status` and `logo_path` are not editable through the profile `PUT`; `logo_path` is not mass-assignable and changes only through the logo Actions. Logo: jpg / jpeg / png / webp, max 2 MB, **no SVG** (can carry scripts); stored under `clubs/{id}/logo/` with a Laravel-generated name. Disk comes from `config('filesystems.club_logo_disk')` (`CLUB_LOGO_DISK`, default `public`) so the logo can move to S3 with Docker (#36) with no code change. The logo file is stored first, the DB is updated in a transaction, the old file is deleted after the commit, and the new file is deleted if the DB write fails.
   - **#17:** Staff management and invitations. Owners can list staff, invite, revoke invitations, change roles, and remove staff. Staff can view staff and invitations but cannot manage them; Coaches and Referees cannot access staff endpoints. Invitations use hashed tokens, localized email, expiry, and one-time acceptance. Coach plan limits are checked during acceptance and promotion. Audit events cover invitations, joins, role changes, and removals. Tests: `StaffActionsTest`, `StaffInvitationTest`, `StaffManagementTest`, `StaffPolicyTest`.
@@ -188,6 +188,18 @@ Repo: `github.com/MahmoudNagah999/RYADA`
     - **Permissions cache:** no custom cache; `spatie/laravel-permission` already caches roles and permissions in the default store (24 hours). `SyncClubRolesAction` needs no explicit flush because `syncPermissions()` clears it, proven by `PermissionCacheTest`.
     - **Tests:** `TenantCacheTest`, `SportSummaryTest` (unit), `SportCacheTest`, `ClubSportCacheTest`, `RunsInClubContextTest`, `QueueRulesTest` (unit), `HorizonAccessTest`, `PermissionCacheTest`.
     - **Decisions (#29):** Redis is a hard dependency of the running app (if it is down, requests touching the cache or the rate limiter return 500); the `failover` cache store was rejected because falling back to the per-process `array` store would silently break invalidation and rate limits; Docker (#36) adds a Redis healthcheck. Invalidation is by observers after commit, not inside Actions. Deploys must run `php artisan queue:restart` (Horizon: `horizon:terminate`). Locally the worker is `php artisan queue:work redis --tries=3`; never run `php artisan horizon` on Windows.
+  - **#31 (notifications, the bell):** new domain `App\Domain\Notification`. Database channel only: no mail and no per-user preferences yet.
+    - **Table:** `notifications` (Laravel structure: uuid `id`, `type`, `morphs('notifiable')`, nullable `read_at`, timestamps) with `data` as a **json** column (so the dedup key can be queried on MySQL and SQLite) and an index `(notifiable_type, notifiable_id, read_at)`. No `club_id`: a notification belongs to a user and a user belongs to one club. `User` already used `Notifiable`.
+    - **Stored as code + params:** the row never holds translated text (same idea as the audit log). `NotificationCode`: `club.welcome` (params `club_name`), `subscription.expiring` (`subscription_id`, `player_id`, `player_name`, `plan_name`, `ends_on`, `days_left`), `subscription.unpaid` (`subscription_id`, `player_id`, `player_name`, `plan_name`, `outstanding_cents`, `currency`). The API translates `message` at read time with the request locale (`lang/{en,ar}/notifications.php`, flat keys; the `:amount` placeholder is `number_format(cents / 100, 2)` plus the currency); an unknown code falls back to the code itself.
+    - **Notification classes:** `ClubDatabaseNotification` (abstract, `via()` = `['database']`, `toDatabase()` returns `code`, `params`, `dedup_key`), `WelcomeClubNotification`, `SubscriptionExpiringNotification`, `SubscriptionUnpaidNotification`. They do **not** implement `ShouldQueue` (a database notification is one insert; `QueueRulesTest` would fail otherwise). The job is what is queued.
+    - **Recipients:** the users of the club with the Owner or Staff role (`ResolveNotificationRecipientsAction`, filters `club_id` explicitly and sets and restores the roles team id). Coach and Referee receive nothing.
+    - **Dedup:** `NotificationSchedule` (pure helpers). `subscription.expiring:{subscription_id}:{ends_on}` means once per subscription and end date; `subscription.unpaid:{subscription_id}:{ISO year}-W{ISO week}` means at most once per week while the balance is unpaid. A recipient who already has a notification with the same key (read or unread) gets nothing, so running the notifier twice creates nothing. Known cost: one dedup query per subscription and recipient in each run (batch it per page if clubs grow).
+    - **Actions:** `NotifyDueSubscriptionsAction` (runs inside `CurrentClub::runAs`; pages through `ListDueSubscriptionsAction` 100 rows at a time, page size from `config('club_notifications.page_size')`; `expiring` uses `expiring_within_days`; `unpaid` skips subscriptions whose `starts_on` is later than today minus `unpaid_grace_days`; returns `NotifyDueSubscriptionsResult` with counts per type), `ListUserNotificationsAction`, `CountUnreadNotificationsAction`, `MarkNotificationAsReadAction` (idempotent), `MarkAllNotificationsAsReadAction`. `ListDueSubscriptionsData` now carries an explicit `page` (the notifier no longer changes the global request).
+    - **Job and command:** `SendDueSubscriptionNotificationsJob extends TenantQueuedJob` (club id only). `php artisan club:notify-due {--club=ID}` dispatches one job per club with `chunkById(100)`; scheduling it is #32. Config `config/club_notifications.php`: `expiring_within_days` (`NOTIFY_EXPIRING_DAYS`, default 7), `unpaid_grace_days` (`NOTIFY_UNPAID_GRACE_DAYS`, default 3), `page_size` (100).
+    - **Hooks in existing flows:** `RegisterClubAction` sends the welcome to the new Owner inside the registration transaction (clubs created from the Filament panel have no Owner, so no welcome); `RemoveStaffAction` deletes the removed user's notifications in the same transaction (morph rows have no foreign key).
+    - **Endpoints** (inside `tenant` + `subscription`): `GET /api/v1/notifications` (newest first, `unread=1`, `per_page` 25 max 100), `GET /notifications/unread-count` (`{"data": {"unread": N}}`), `POST /notifications/{notification}/read` (200, idempotent, UUID route constraint), `POST /notifications/read-all` (`{"data": {"marked": N}}`). Every query goes through `$request->user()->notifications()`, so another user's or another club's id is `404`. No new permissions, no policy, no audit events, no new error codes. HTTP: `Requests/Notification/ListNotificationsRequest`, `NotificationResource`, `Controllers/Api/V1/Notification/NotificationController`.
+    - **Tests:** `NotificationScheduleTest` (unit), `NotificationRecipientsTest`, `NotifyDueSubscriptionsActionTest`, `NotificationLifecycleTest`, `SendDueSubscriptionNotificationsJobTest`, `NotificationApiTest`, support class `Tests\Support\Notification\NotificationFixture` (Pest helpers prefixed `ntf`). Suite: 561 tests green.
+    - **Decisions (#31):** recipients are Owner and Staff only; three types only (expiring soon, unpaid balance, welcome); the bell only, mail and preferences are later; notifications are written synchronously and the job is queued; reading needs no permission because a user only ever reads their own rows.
 
 ## Technical notes (learned so far)
 - Pest tests: Symfony adds `Accept-Language: en-us,en` to every test request. To test "no header", pass `['Accept-Language' => '']`.
@@ -243,6 +255,7 @@ Repo: `github.com/MahmoudNagah999/RYADA`
 - In tests, freeze time with `Carbon::setTestNow(...)` and reset it in `afterEach(fn () => Carbon::setTestNow())`.
 - A relation used with `delete()` should not carry an `orderBy` (ordered `hasMany` for schedules): delete through `Model::query()->where(...)->delete()`.
 - When a controller imports a class that does not exist, Larastan reports `class.notFound` for every use of it: check the file path and name first.
+- Database notifications store a stable `code` plus `params` and never translated text; the API translates at read time. Notification classes are not queued (the job is). Reminders carry a `dedup_key` (JSON column `data`) and are skipped when the recipient already has it. A notification belongs to a user: read it only through `$request->user()->notifications()`. `Route::whereUuid()` exists for routes only, not on the query builder. Do not mutate the global request (for example the `page` parameter) inside Actions: pass the value in a DTO.
 - Club-specific cache data goes through `TenantCache` only; clear entries from model observers that implement `ShouldHandleEventsAfterCommit`; cache plain arrays, never models (ADR-009). Cache tests: `Cache::flush()` in `beforeEach`, count callback runs with `use (&$calls)` inside a normal closure (an arrow function copies the variable and the counter stays 0).
 - Queue tests: dispatch with `Job::dispatch()` (it goes through job middleware on the `sync` driver); `dispatchSync` skips middleware. `sync` runs a job inside the request, which hides a missing club context, so job tests run with no current club on purpose.
 - `tests/Unit` does not boot Laravel: `base_path()` and other helpers are not available there; build paths with `dirname(__DIR__, 2)`.
@@ -439,11 +452,12 @@ Execution order: #29, #31, #32.
 - [x] Tenant-aware queued jobs (`TenantQueuedJob`, `RunsInClubContext`) and queue architecture rules
 - [x] ADR-009 + README section
 
-**#31 feat: notifications** (`type:feature`, `area:api`)
-- [ ] Mail + database notifications (registration, expiring player subscriptions)
-- [ ] Notification jobs extend `TenantQueuedJob` (club id + plain ids); mails go out in the recipient's locale
-- [ ] Expiring and unpaid subscriptions come from `ListDueSubscriptionsAction` (#58)
-- [ ] Endpoint to read notifications
+**#31 feat: notifications** (`type:feature`, `area:api`) - DONE
+- [x] Database notifications (the bell): welcome on club registration, subscription expiring soon, subscription with an unpaid balance; recipients Owner and Staff
+- [x] Expiring and unpaid subscriptions come from `ListDueSubscriptionsAction` (#58), with dedup keys so a reminder is not repeated
+- [x] Notification job extends `TenantQueuedJob`; command `club:notify-due` dispatches one job per club
+- [x] Endpoints to read notifications (list, unread count, mark read, read all); messages translated at read time (ar and en)
+- [ ] Mail notifications and per-user preferences: not done, post-v1.0 backlog
 - [ ] Tournament result notifications: v2.0 (#27)
 
 **#32 feat: scheduled tasks** (`type:feature`, `area:infra`)
@@ -451,6 +465,7 @@ Execution order: #29, #31, #32.
 - [ ] Auto-expire player subscriptions (#57)
 - [ ] Reminders (expiring subscriptions, unpaid balances), built on `ListDueSubscriptionsAction` (#58)
 - [ ] Scheduled commands dispatch one `TenantQueuedJob` per club (never a tenant-owned model)
+- [ ] Schedule `php artisan club:notify-due` daily (the command and the job exist since #31); `horizon:snapshot` is already in `routes/console.php`; the scheduler itself must run (cron or Docker, #36)
 - [ ] Auto-close registration at tournament date: v2.0 (#24)
 
 ## M7 Quality & Release
@@ -499,13 +514,16 @@ Ideas agreed on 2026-10-26. No GitHub issues yet: create them when v1.0.0 is out
 - [ ] The numbers and the kinds of limits on players and coaches will be revised later (new tiers, maybe other limits such as tournaments per year). Nothing changes in v1.0.0.
 - [ ] Keep it cheap to change: limits are plan columns, the check is one Action (`EnsureWithinPlanLimitAction`) and one enum (`PlanLimit`). A new limit = one enum case + one column + one error code in `en` and `ar`.
 
+**Mail notifications and preferences**
+- [ ] Add the mail channel to the three notifications (queued mailables, recipient's locale) and a per-user setting to turn mail off. The bell stays the default.
+
 **Per-club timezone**
 - [ ] Attendance "today" uses one global `ATTENDANCE_TIMEZONE` (Africa/Cairo). If clubs outside Egypt are supported, move it to a `clubs.timezone` column.
 
 ---
 
 ## Implementation notes
-- M1 to M5 are done (#22 moved to v2.0); M6 is in progress (#29 done, #31 next, then #32). A new club-specific cache entry uses `TenantCache` plus an after-commit observer; a new club job extends `TenantQueuedJob` (ADR-009). For every new club-scoped endpoint: put it inside the `tenant` group **and its nested `subscription` group** (`RouteTenancyTest` fails otherwise), add cross-club tests with `TenantFixture`, add its policy and permissions, and add any new error or translation keys in both `en` and `ar`. Any Action that adds players or coaches calls `EnsureWithinPlanLimitAction` inside a transaction with a lock on the club row. Any new sensitive operation records an `ActivityEvent` with `RecordActivityAction` inside the Action's transaction, with the key in `en` and `ar` (ADR-006).
+- M1 to M5 are done (#22 moved to v2.0); M6 is in progress (#29 and #31 done, #32 next). A new club-specific cache entry uses `TenantCache` plus an after-commit observer; a new club job extends `TenantQueuedJob` (ADR-009). For every new club-scoped endpoint: put it inside the `tenant` group **and its nested `subscription` group** (`RouteTenancyTest` fails otherwise), add cross-club tests with `TenantFixture`, add its policy and permissions, and add any new error or translation keys in both `en` and `ar`. Any Action that adds players or coaches calls `EnsureWithinPlanLimitAction` inside a transaction with a lock on the club row. Any new sensitive operation records an `ActivityEvent` with `RecordActivityAction` inside the Action's transaction, with the key in `en` and `ar` (ADR-006).
 - Each issue: branch, PR, Conventional Commit, tests included, `composer check` green before pushing.
 - Skip tests that only exercise the framework (e.g. "factory creates a model"); write tests for our own logic and rules.
-- First message to send in the new chat: "Continue RYADA v1.0 from the current status (start #31 notifications)." (If a previous PR is not merged yet, say so first.) Redis must be running locally: `docker start ryada-redis`.
+- First message to send in the new chat: "Continue RYADA v1.0 from the current status (start #32 scheduled tasks)." (If a previous PR is not merged yet, say so first.) Redis must be running locally: `docker start ryada-redis`.
