@@ -1,16 +1,16 @@
 <?php
 
-use App\Domain\Auth\Actions\SyncClubRolesAction;
 use App\Domain\Auth\Enums\RoleName;
 use App\Domain\Club\Models\Club;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Tenancy\TenantFixture;
 
 uses(RefreshDatabase::class);
 
 function makeClubUser(Club $club, RoleName $role): User
 {
-    app(SyncClubRolesAction::class)->execute($club);
+    TenantFixture::syncClubRoles($club);
 
     $user = User::factory()->forClub($club)->create();
 
@@ -52,7 +52,7 @@ it('denies access to another club even for an owner', function () {
 
 it('denies a user with no role', function () {
     $club = Club::factory()->create();
-    app(SyncClubRolesAction::class)->execute($club);
+    TenantFixture::syncClubRoles($club);
     $user = User::factory()->forClub($club)->create();
 
     setPermissionsTeamId($club->id);
