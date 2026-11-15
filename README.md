@@ -131,12 +131,29 @@ Sensitive operations are recorded with `spatie/laravel-activitylog` and browsabl
 
 The bell is the only channel: notifications are rows in the `notifications` table, readable through `/api/v1/notifications`. No mail, and no per-user preferences yet.
 
-- **Stored, not translated:** a row holds a stable `code` (`club.welcome`, `subscription.expiring`, `subscription.unpaid`) plus its `params`. The API builds `message` at read time with the locale of the request, exactly like API errors, so switching language re-translates old notifications.
-- **Recipients:** the users of the club holding the `owner` or `staff` role. Coaches and referees never receive notifications.
-- **Not queued, the job is:** a database notification is a single insert, so the notification classes are written synchronously. `SendDueSubscriptionNotificationsJob` (one per club, a `TenantQueuedJob`) runs inside the club context and can be re-run safely.
-- **Dedup:** a recipient never gets the same `dedup_key` twice. Expiring notifications are keyed by subscription and end date; unpaid ones by subscription and ISO week, so the reminder repeats at most once a week. An unpaid subscription is only chased once it started at least `NOTIFY_UNPAID_GRACE_DAYS` days ago, and expiring ones only look `NOTIFY_EXPIRING_DAYS` ahead (see `config/club_notifications.php`).
-- **Command:** `php artisan club:notify-due` dispatches one job per club; `--club=ID` limits it to one club. Scheduling arrives in #32.
+- **Stored, not translated:** a row holds a stable `code` (`club.welcome`, `club.plan_expiring`, `subscription.expiring`, `subscription.unpaid`) plus its `params`. The API builds `message` at read time with the locale of the request, exactly like API errors, so switching language re-translates old notifications.
+- **Recipients:** the users of the club holding the `owner` or `staff` role. Coaches and referees never receive notifications. The SaaS plan reminder is the one exception: it goes to the owner only.
+- **Not queued, the job is:** a database notification is a single insert, so the notification classes are written synchronously. `SendDueSubscriptionNotificationsJob` and `SendPlanExpiryNotificationsJob` (one per club, a `TenantQueuedJob` each) run inside the club context and can be re-run safely.
+- **Dedup:** a recipient never gets the same `dedup_key` twice. Expiring notifications are keyed by subscription and end date; unpaid ones by subscription and ISO week, so the reminder repeats at most once a week; plan reminders by club, end date and threshold, so renewing the plan re-enables them. An unpaid subscription is only chased once it started at least `NOTIFY_UNPAID_GRACE_DAYS` days ago, and expiring ones only look `NOTIFY_EXPIRING_DAYS` ahead (see `config/club_notifications.php`).
+- **Commands:** `php artisan club:notify-due` and `php artisan clubs:notify-plan-expiry` dispatch one job per club; `--club=ID` limits them to one club. Both run daily (see [Scheduled tasks](#scheduled-tasks)).
 - Notifications are deleted with the user when a staff member is removed from the club.
+
+## Scheduled tasks
+
+Two daily tasks, both in `routes/console.php` and both in the club business timezone (`SUBSCRIPTIONS_TIMEZONE`), never overlapping and on one server. Design and reasons: [ADR-010](docs/adr/010-scheduled-tasks.md).
+
+- `club:notify-due` at 08:00: the due-subscription notifications (#31).
+- `clubs:notify-plan-expiry` at 08:05: reminds a club owner that the SaaS plan ends soon, `NOTIFY_PLAN_EXPIRY_DAYS` days before the end date (default `7,1`, comma separated).
+
+Nothing expires in the database: a club's plan status is computed at request time by the `subscription` middleware, and a player subscription's status from `ends_on`. The reminders therefore only look forward; nothing is sent once a plan has ended.
+
+**The scheduler must actually run.** On a server, add the cron entry Laravel documents, and make sure it stays there:
+
+```
+* * * * * cd /path/to/ryada && php artisan schedule:run >> /dev/null 2>&1
+```
+
+The Docker scheduler service arrives in #36. `onOneServer()` and `withoutOverlapping()` are cache locks, so they need the shared store: `CACHE_STORE=redis` must be the same on every scheduler and worker host. After a deploy, run `php artisan queue:restart` so the workers pick up the new code.
 
 ## Architecture decisions
 
@@ -146,6 +163,9 @@ The bell is the only channel: notifications are rows in the `notifications` tabl
 - [ADR-004: Roles and permissions](docs/adr/004-roles-and-permissions.md)
 - [ADR-005: API conventions](docs/adr/005-api-conventions.md)
 - [ADR-006: Audit log](docs/adr/006-audit-log.md)
+- [ADR-007: Multi-sport](docs/adr/007-multi-sport.md)
+- [ADR-009: Caching, queues and Redis](docs/adr/009-caching-and-queues.md)
+- [ADR-010: Scheduled tasks and plan-expiry reminders](docs/adr/010-scheduled-tasks.md)
 
 ## Getting started
 

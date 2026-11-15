@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Domain\Notification\Enums\NotificationCode;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\DatabaseNotification;
@@ -29,12 +30,12 @@ class NotificationResource extends JsonResource
         /** @var array<string, mixed> $params */
         $params = is_array($data['params'] ?? null) ? $data['params'] : [];
 
-        $key = 'notifications.'.$code;
+        $key = $this->translationKey($code, $params);
 
         return [
             'id' => $this->id,
             'code' => $code,
-            'message' => $code !== '' && Lang::has($key)
+            'message' => $key !== null && Lang::has($key)
                 ? __($key, $this->messageParams($params))
                 : $code,
             'params' => $params,
@@ -44,19 +45,46 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * Money is stored as integer cents; the sentence needs a formatted amount.
+     * The code picks its own key, so a singular variant stays next to the Arabic and English
+     * lines instead of being decided in the resource.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    private function translationKey(string $code, array $params): ?string
+    {
+        if ($code === '') {
+            return null;
+        }
+
+        $known = NotificationCode::tryFrom($code);
+
+        return $known?->translationKey($params) ?? 'notifications.'.$code;
+    }
+
+    /**
+     * Money is stored as integer cents and reminders store a calendar date as `ends_on` and a
+     * count as `days_left`; the sentences speak of an amount, a `date` and a number of `days`.
      *
      * @param  array<string, mixed>  $params
      * @return array<string, mixed>
      */
     private function messageParams(array $params): array
     {
-        if (! isset($params['outstanding_cents'], $params['currency'])) {
-            return $params;
+        $replacements = $params;
+
+        if (isset($params['outstanding_cents'], $params['currency'])) {
+            $amount = number_format(((int) $params['outstanding_cents']) / 100, 2, '.', '');
+            $replacements['amount'] = $amount.' '.(string) $params['currency'];
         }
 
-        $amount = number_format(((int) $params['outstanding_cents']) / 100, 2, '.', '');
+        if (isset($params['ends_on']) && is_string($params['ends_on'])) {
+            $replacements['date'] = $params['ends_on'];
+        }
 
-        return [...$params, 'amount' => $amount.' '.(string) $params['currency']];
+        if (isset($params['days_left'])) {
+            $replacements['days'] = (string) (int) $params['days_left'];
+        }
+
+        return $replacements;
     }
 }
