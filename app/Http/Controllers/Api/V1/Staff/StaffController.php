@@ -41,7 +41,9 @@ class StaffController extends Controller
 
         Gate::authorize('manage', $staffMember);
 
-        return new StaffResource($action->execute($actor, $staffMember, $request->toDto()));
+        $updated = $action->execute($actor, $staffMember, $request->toDto());
+
+        return new StaffResource($updated->load('roles'));
     }
 
     public function destroy(Request $request, int $user, RemoveStaffAction $action): Response

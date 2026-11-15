@@ -9,8 +9,11 @@ use App\Domain\Sport\Models\ClubSport;
 use App\Domain\Sport\Models\Sport;
 use App\Models\Admin;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -36,9 +39,32 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(fn ($user) => $user instanceof Admin ? true : null);
 
         $this->configureRateLimiting();
+        $this->configureEloquent();
 
         Sport::observe(SportCatalogObserver::class);
         ClubSport::observe(ClubSportObserver::class);
+    }
+
+    /**
+     * The lazy-loading guard is always on so local, CI and production run the same
+     * Eloquent rules. Outside production a violation throws the framework exception
+     * (the default behaviour, which is what fails a test); in production it is logged
+     * without model attributes and the request keeps going instead of returning a 500.
+     */
+    private function configureEloquent(): void
+    {
+        Model::preventLazyLoading();
+
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation, LazyLoadingViolationException $exception): void {
+            if (! $this->app->environment('production')) {
+                throw $exception;
+            }
+
+            Log::warning('Lazy loading violation.', [
+                'model' => $model::class,
+                'relation' => $relation,
+            ]);
+        });
     }
 
     private function configureRateLimiting(): void

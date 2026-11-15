@@ -33,7 +33,9 @@ class CreatePlayerAction
 
         return DB::transaction(function () use ($club, $data, $birthDate, $gender): Player {
             // Lock the club row so two concurrent requests cannot both pass the plan limit.
-            $lockedClub = Club::query()->whereKey($club->id)->lockForUpdate()->firstOrFail();
+            // The plan comes with it: the limit check below reads `$club->plan` and must not
+            // start a query of its own on a single-row model (the guard only sees collections).
+            $lockedClub = Club::query()->with('plan')->whereKey($club->id)->lockForUpdate()->firstOrFail();
 
             if ($data->nationalId !== null
                 && Player::query()->where('national_id', $data->nationalId)->exists()) {
