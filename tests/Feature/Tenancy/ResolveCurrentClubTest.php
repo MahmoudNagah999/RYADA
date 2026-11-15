@@ -1,6 +1,5 @@
 <?php
 
-use App\Domain\Auth\Actions\SyncClubRolesAction;
 use App\Domain\Auth\Enums\RoleName;
 use App\Domain\Club\Models\Club;
 use App\Domain\Shared\Tenancy\CurrentClub;
@@ -9,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
+use Tests\Support\Tenancy\TenantFixture;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
@@ -26,7 +26,7 @@ beforeEach(function () {
 
 function tenantProbeUser(Club $club, RoleName $role): User
 {
-    app(SyncClubRolesAction::class)->execute($club);
+    TenantFixture::syncClubRoles($club);
 
     $user = User::factory()->forClub($club)->create();
 
