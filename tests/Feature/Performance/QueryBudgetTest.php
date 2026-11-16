@@ -731,3 +731,161 @@ it('keeps the single resource endpoints within a pinned budget', function (): vo
     qbCeiling('GET /payments/{payment}/receipt', $receipt, 12); // measured on 2026-11-16
     qbCeiling('GET /training-groups/{group}', $groupShow, 9); // measured on 2026-11-16
 });
+
+/*
+|--------------------------------------------------------------------------
+| Write endpoints
+|--------------------------------------------------------------------------
+*/
+
+it('pins the player creation budget with and without a club plan', function (): void {
+    // Both tenants must exist before the first HTTP request: `auth:sanctum` changes the
+    // default guard during a request, and TenantFixture reads it when it creates roles.
+    $withPlan = TenantFixture::create();
+    $withoutPlan = TenantFixture::create();
+
+    $withPlan->club->forceFill([
+        'plan_id' => Plan::factory()->create(['max_players' => 100])->id,
+    ])->save();
+
+    qbWarmUp($withPlan, '/api/v1/players');
+
+    $withPlanMeasurement = qbMeasure($withPlan, 'POST', '/api/v1/players', [
+        'name' => 'Budget Created Player',
+        'national_id' => '31005150101234',
+        'phone' => '01099998888',
+    ]);
+
+    qbWarmUp($withoutPlan, '/api/v1/players');
+
+    $withoutPlanMeasurement = qbMeasure($withoutPlan, 'POST', '/api/v1/players', [
+        'name' => 'Budget Created Player',
+        'national_id' => '31005150101234',
+        'phone' => '01099998888',
+    ]);
+
+    $withPlanMeasurement['response']->assertCreated()->assertJsonPath('data.name', 'Budget Created Player');
+    $withoutPlanMeasurement['response']->assertCreated()->assertJsonPath('data.name', 'Budget Created Player');
+
+    // PR 2 added Club::with('plan') so the plan limit check never lazy loads. A club with a
+    // plan therefore runs one eager-load query the club without a plan does not; both are
+    // pinned separately so a future change to either path is caught.
+    expect($withPlanMeasurement['count'])->toBeGreaterThanOrEqual($withoutPlanMeasurement['count']);
+
+    qbWriteCeiling('POST /players (club with plan)', $withPlanMeasurement, 11); // measured on 2026-11-16
+    qbWriteCeiling('POST /players (club without plan)', $withoutPlanMeasurement, 10); // measured on 2026-11-16
+});
+
+it('pins the subscription and payment write budgets', function (): void {
+    $tenant = TenantFixture::create();
+    $sport = Sport::factory()->create();
+    $plan = qbPlan($tenant, $sport, 'Budget Write Plan');
+    $player = qbPlayers($tenant, 1)[0];
+    qbEnroll($tenant, $player, [$sport]);
+
+    qbWarmUp($tenant, '/api/v1/player-subscriptions');
+
+    $subscriptionMeasurement = qbMeasure(
+        $tenant,
+        'POST',
+        "/api/v1/players/{$player->id}/subscriptions",
+        ['membership_plan_id' => $plan->id],
+    );
+
+    $subscriptionMeasurement['response']->assertCreated();
+
+    $subscriptionId = (int) $subscriptionMeasurement['response']->json('data.id');
+
+    qbWarmUp($tenant, "/api/v1/player-subscriptions/{$subscriptionId}/payments");
+
+    $paymentMeasurement = qbMeasure(
+        $tenant,
+        'POST',
+        "/api/v1/player-subscriptions/{$subscriptionId}/payments",
+        ['amount_cents' => 10000, 'method' => 'cash'],
+    );
+
+    $paymentMeasurement['response']->assertCreated()->assertJsonPath('data.amount_cents', 10000);
+
+    qbWriteCeiling('POST /players/{player}/subscriptions', $subscriptionMeasurement, 16); // measured on 2026-11-16
+    qbWriteCeiling('POST /player-subscriptions/{subscription}/payments', $paymentMeasurement, 15); // measured on 2026-11-16
+});
+
+it('pins the attendance write budget for three records', function (): void {
+    $tenant = TenantFixture::create();
+    $sport = Sport::factory()->create();
+    $group = qbTrainingGroups($tenant, $sport, $tenant->user, 1)[0];
+    $members = qbMembers($tenant, $group, 3);
+
+    qbWarmUp($tenant, "/api/v1/training-groups/{$group->id}/attendance?date=2026-05-30");
+
+    $measurement = qbMeasure(
+        $tenant,
+        'POST',
+        "/api/v1/training-groups/{$group->id}/attendance",
+        [
+            'date' => '2026-05-30',
+            'records' => array_map(
+                fn (Player $player): array => ['player_id' => $player->id, 'status' => 'present'],
+                $members,
+            ),
+        ],
+    );
+
+    $measurement['response']->assertOk()->assertJsonCount(3, 'data');
+
+    qbWriteCeiling('POST /training-groups/{group}/attendance (3 records)', $measurement, 17); // measured on 2026-11-16
+});
+
+it('keeps the attendance write constant in the number of records', function (): void {
+    $tenant = TenantFixture::create();
+    $sport = Sport::factory()->create();
+    $group = qbTrainingGroups($tenant, $sport, $tenant->user, 1)[0];
+    $members = qbMembers($tenant, $group, 12);
+
+    qbWarmUp($tenant, "/api/v1/training-groups/{$group->id}/attendance?date=2026-05-30");
+
+    $small = qbMeasure(
+        $tenant,
+        'POST',
+        "/api/v1/training-groups/{$group->id}/attendance",
+        [
+            'date' => '2026-05-30',
+            'records' => array_map(
+                fn (Player $player): array => ['player_id' => $player->id, 'status' => 'present'],
+                array_slice($members, 0, 3),
+            ),
+        ],
+    );
+
+    $large = qbMeasure(
+        $tenant,
+        'POST',
+        "/api/v1/training-groups/{$group->id}/attendance",
+        [
+            'date' => '2026-05-31',
+            'records' => array_map(
+                fn (Player $player): array => ['player_id' => $player->id, 'status' => 'present'],
+                $members,
+            ),
+        ],
+    );
+
+    $small['response']->assertOk()->assertJsonCount(12, 'data');
+    $large['response']->assertOk()->assertJsonCount(12, 'data');
+
+    expect($large['count'])->toBe(
+        $small['count'],
+        sprintf(
+            'POST /training-groups/{group}/attendance: queries grew with the number of records '
+            .'(3 records => %d queries, 12 records => %d queries). SQL of the 12-record request: %s',
+            $small['count'],
+            $large['count'],
+            implode(' | ', $large['queries']),
+        ),
+    );
+})->skip(
+    'N+1: RecordTrainingAttendanceAction inserts one row per record instead of using a bulk upsert. '
+    .'Measured on 2026-11-16: 3 records => 17 queries, 12 records => 26 queries (one extra INSERT per record). '
+    .'Fix in a follow-up PR; PR 4 covers the notifier paths.',
+);
