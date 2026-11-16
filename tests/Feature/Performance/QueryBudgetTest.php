@@ -534,6 +534,8 @@ it('keeps the player subscription and payment lists constant in the number of ro
 
     $subscriptions = qbSubscriptions($tenant, $plan, 3);
     qbPayment($tenant, $subscriptions[0], 10000, 1);
+    qbPayment($tenant, $subscriptions[0], 9000, 2);
+    qbPayment($tenant, $subscriptions[0], 8000, 3, 2000);
 
     qbWarmUp($tenant, '/api/v1/player-subscriptions');
 
@@ -544,8 +546,9 @@ it('keeps the player subscription and payment lists constant in the number of ro
 
     qbSubscriptions($tenant, $plan, 9, 4);
 
-    qbPayment($tenant, $subscriptions[0], 9000, 2);
-    qbPayment($tenant, $subscriptions[0], 8000, 3, 2000);
+    foreach (range(4, 12) as $receiptNumber) {
+        qbPayment($tenant, $subscriptions[0], 1000, $receiptNumber, $receiptNumber % 3 === 0 ? 500 : null);
+    }
 
     qbWarmUp($tenant, '/api/v1/player-subscriptions');
 
@@ -555,7 +558,7 @@ it('keeps the player subscription and payment lists constant in the number of ro
 
     qbConstant('GET /player-subscriptions', $listSmall, $listLarge, 3, 12);
     qbConstant('GET /player-subscriptions/due', $dueSmall, $dueLarge, 3, 12);
-    qbConstant('GET /player-subscriptions/{subscription}/payments', $paymentsSmall, $paymentsLarge, 1, 3);
+    qbConstant('GET /player-subscriptions/{subscription}/payments', $paymentsSmall, $paymentsLarge, 3, 12);
 
     qbCeiling('GET /player-subscriptions', $listSmall, 9); // measured on 2026-11-16
     qbCeiling('GET /player-subscriptions/due', $dueSmall, 9); // measured on 2026-11-16
