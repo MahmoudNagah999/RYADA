@@ -155,6 +155,17 @@ Nothing expires in the database: a club's plan status is computed at request tim
 
 The Docker scheduler service arrives in #36. `onOneServer()` and `withoutOverlapping()` are cache locks, so they need the shared store: `CACHE_STORE=redis` must be the same on every scheduler and worker host. After a deploy, run `php artisan queue:restart` so the workers pick up the new code.
 
+## Performance
+
+Query budgets and the lazy-loading guard run in the suite ([`QueryBudgetTest`](tests/Feature/Performance/QueryBudgetTest.php)). The full index and query review is in [docs/performance.md](docs/performance.md): it records every `EXPLAIN` / `EXPLAIN ANALYZE` decision, the indexes added with their measured write cost, and the query rewrites still open (#84).
+
+To rebuild the realistic multi-tenant dataset on a throwaway database (it is never part of `DatabaseSeeder`):
+
+```bash
+php artisan migrate:fresh
+php artisan db:seed --class=PerformanceSeeder
+```
+
 ## Architecture decisions
 
 - [ADR-001: Tenancy strategy](docs/adr/001-tenancy-strategy.md)
