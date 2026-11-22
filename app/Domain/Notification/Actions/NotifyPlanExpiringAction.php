@@ -7,6 +7,7 @@ use App\Domain\Club\Models\Club;
 use App\Domain\Notification\DTOs\NotifyPlanExpiringResult;
 use App\Domain\Notification\Enums\PlanExpirySkipReason;
 use App\Domain\Notification\Notifications\PlanExpiringNotification;
+use App\Domain\Notification\Support\ExistingDedupKeys;
 use App\Domain\Notification\Support\NotificationSchedule;
 use App\Domain\Shared\Tenancy\CurrentClub;
 use App\Models\User;
@@ -26,6 +27,7 @@ class NotifyPlanExpiringAction
     public function __construct(
         private readonly CurrentClub $currentClub,
         private readonly ResolveNotificationRecipientsAction $resolveRecipients,
+        private readonly LoadExistingDedupKeysAction $loadExistingDedupKeys,
     ) {}
 
     public function execute(Club $club): NotifyPlanExpiringResult
@@ -91,6 +93,9 @@ class NotifyPlanExpiringAction
     /**
      * One insert per recipient, inside one transaction, exactly like the #31 notifier.
      *
+     * The key is the same for every recipient, so it is resolved for all of them in one query
+     * instead of one `exists()` per recipient.
+     *
      * @param  Collection<int, User>  $recipients
      */
     private function send(
@@ -101,18 +106,23 @@ class NotifyPlanExpiringAction
         $dedupKey = $notification->dedupKey();
 
         return DB::transaction(function () use ($recipients, $notification, $dedupKey, $threshold): NotifyPlanExpiringResult {
+            /** @var list<int> $recipientIds */
+            $recipientIds = $recipients->modelKeys();
+
+            $existing = new ExistingDedupKeys;
+            $existing->merge($this->loadExistingDedupKeys->execute($recipientIds, [$dedupKey]));
+
             $created = 0;
 
             foreach ($recipients as $recipient) {
-                $alreadySent = $recipient->notifications()
-                    ->where('data->dedup_key', $dedupKey)
-                    ->exists();
+                $recipientId = (int) $recipient->getKey();
 
-                if ($alreadySent) {
+                if ($existing->contains($recipientId, $dedupKey)) {
                     continue;
                 }
 
                 $recipient->notify($notification);
+                $existing->add($recipientId, $dedupKey);
                 $created++;
             }
 
