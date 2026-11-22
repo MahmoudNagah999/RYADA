@@ -1,19 +1,21 @@
 ﻿# RYADA
 
-Multi-tenant SaaS for managing karate clubs and tournaments.
+Multi-tenant SaaS for managing sports clubs and academies.
 
 > **Status:** under active development. See the [roadmap](../../issues) (milestones M1 to M7) for progress.
+> **v1.0** is multi-sport club management with player subscriptions. **v2.0** adds the karate module (belts, weight classes) and tournaments.
 
 ## What it does
 
-- **Clubs (tenants):** each club manages its own players, staff, training groups, memberships, and payments.
-- **Tournaments:** registration rules, kumite bracket generation, kata scoring, results, and certificates.
-- **Platform admin:** the platform owner manages clubs, SaaS plans, and subscriptions from a Filament panel, and can browse an audit log of sensitive operations.
-- **Bilingual:** Arabic and English across API messages and the admin panel.
+- **Clubs (tenants):** each club offers one or more sports and manages its own players, staff, training groups and attendance, membership plans, player subscriptions, and payments.
+- **Platform admin:** the platform owner manages clubs, SaaS plans, the sports catalog, and subscriptions from a Filament panel, and can browse an audit log of sensitive operations.
+- **Notifications and scheduled tasks:** in-app reminders for expiring and unpaid subscriptions and for the club's SaaS plan, sent by daily scheduled jobs.
+- **Bilingual:** Arabic and English across API messages and notifications.
+- **Planned for v2.0:** tournaments (registration rules, kumite bracket generation, kata scoring, results, certificates, live scoreboard) and the karate-specific rules.
 
 ## Tech stack
 
-Laravel, MySQL, REST API (`/api/v1`), Sanctum, Pest, Pint, Larastan, Filament (admin). Redis and Reverb are introduced only where needed (Milestone 6).
+Laravel 13 (PHP 8.4), MySQL, REST API (`/api/v1`), Sanctum, Pest, Pint, Larastan, Filament (admin), Redis (cache, queue, rate limiting) with Horizon. Reverb arrives with the live scoreboard in v2.0.
 
 ## Architecture
 
@@ -25,23 +27,26 @@ flowchart LR
     subgraph App["Laravel application"]
         API["HTTP layer<br/>Middleware, Controllers,<br/>Form Requests, API Resources"]
         Domain["Domain layer<br/>Actions, DTOs, Policies,<br/>Models, Enums"]
+        Worker["Queue worker and scheduler<br/>(tenant-aware jobs)"]
         API --> Domain
         Filament --> Domain
+        Worker --> Domain
     end
 
     Domain --> DB[("MySQL<br/>single DB, club_id scoped")]
+    Domain --> Redis[("Redis<br/>cache, queue, rate limits")]
 ```
 
-Request flow on the club API: `SetLocale`, then the rate limiter and, on club routes, `auth:sanctum` and the tenant middleware run first. Then a thin Controller validates with a Form Request, builds a DTO, calls an Action, and returns an API Resource. Authorization is handled by Policies.
+Request flow on the club API: `SetLocale`, then the rate limiter and, on club routes, `auth:sanctum`, the tenant middleware and the subscription middleware run first. Then a thin Controller validates with a Form Request, builds a DTO, calls an Action, and returns an API Resource. Authorization is handled by Policies.
 
 ## Project structure
 
 ```text
 app/
   Domain/
-    <Domain>/            # Club, Player, Tournament, ...
-      Actions/
-      DTOs/
+    <Domain>/            # Club, Player, Sport, Membership, Training,
+      Actions/           # PlayerSubscription, Payment, Notification, ...
+      DTOs/              # (Tournament stays empty until v2.0)
       Enums/
       Models/
       Policies/
@@ -59,7 +64,11 @@ Conventions:
 - Controllers stay thin. The domain layer never depends on `App\Http` (enforced by an architecture test).
 - Every user-facing string is a translation key present in both `en` and `ar`.
 - Every issue is a branch + pull request with Conventional Commits (`feat(player): ...`).
-- Every club-scoped route goes inside the `tenant` middleware group, after `auth:sanctum`. It sets the current club and the permissions team from the authenticated user.
+- Every club-scoped route goes inside the `tenant` middleware group, after `auth:sanctum`, and inside its nested `subscription` group. `tenant` sets the current club and the permissions team from the authenticated user; `subscription` rejects suspended and expired clubs. `RouteTenancyTest` fails otherwise.
+
+## Multi-sport model
+
+A club offers one or more sports from a global catalog managed by the platform admin, and a player can be enrolled in several of the club's sports. Membership plans and training groups belong to one sport; a player subscription takes its sport from its plan and snapshots the price, currency and duration. The SaaS plan limits stay per club and count a player once, however many sports the player is in. Sport-specific rules (belts, weight classes) will live in separate per-sport domains in v2.0. See [ADR-007](docs/adr/007-multi-sport.md).
 
 ## Roles & permissions
 
@@ -116,7 +125,7 @@ Sensitive operations are recorded with `spatie/laravel-activitylog` and browsabl
 
 - Record an event from an Action with `RecordActivityAction::execute(ActivityEvent::X, $subject, $properties)`, inside the Action's `DB::transaction`, so the log and the change commit or roll back together.
 - Events live in `App\Domain\Audit\Enums\ActivityEvent`. A new event also needs its translation key in `lang/en/admin.php` and `lang/ar/admin.php` (`audit.events`).
-- Platform-level events (such as plan changes) have no club (`club_id = null`).
+- Platform-level events (such as plan and sport changes) have no club (`club_id = null`).
 - Never put passwords, tokens or national IDs in the event properties.
 
 ## Payments and receipts
@@ -134,7 +143,7 @@ The bell is the only channel: notifications are rows in the `notifications` tabl
 - **Stored, not translated:** a row holds a stable `code` (`club.welcome`, `club.plan_expiring`, `subscription.expiring`, `subscription.unpaid`) plus its `params`. The API builds `message` at read time with the locale of the request, exactly like API errors, so switching language re-translates old notifications.
 - **Recipients:** the users of the club holding the `owner` or `staff` role. Coaches and referees never receive notifications. The SaaS plan reminder is the one exception: it goes to the owner only.
 - **Not queued, the job is:** a database notification is a single insert, so the notification classes are written synchronously. `SendDueSubscriptionNotificationsJob` and `SendPlanExpiryNotificationsJob` (one per club, a `TenantQueuedJob` each) run inside the club context and can be re-run safely.
-- **Dedup:** a recipient never gets the same `dedup_key` twice. Expiring notifications are keyed by subscription and end date; unpaid ones by subscription and ISO week, so the reminder repeats at most once a week; plan reminders by club, end date and threshold, so renewing the plan re-enables them. An unpaid subscription is only chased once it started at least `NOTIFY_UNPAID_GRACE_DAYS` days ago, and expiring ones only look `NOTIFY_EXPIRING_DAYS` ahead (see `config/club_notifications.php`).
+- **Dedup:** a recipient never gets the same `dedup_key` twice. Expiring notifications are keyed by subscription and end date; unpaid ones by subscription and ISO week, so the reminder repeats at most once a week; plan reminders by club, end date and threshold, so renewing the plan re-enables them. An unpaid subscription is only chased once it started at least `NOTIFY_UNPAID_GRACE_DAYS` days ago, and expiring ones only look `NOTIFY_EXPIRING_DAYS` ahead (see `config/club_notifications.php`). The existing keys of a whole page are loaded in one query.
 - **Commands:** `php artisan club:notify-due` and `php artisan clubs:notify-plan-expiry` dispatch one job per club; `--club=ID` limits them to one club. Both run daily (see [Scheduled tasks](#scheduled-tasks)).
 - Notifications are deleted with the user when a staff member is removed from the club.
 
@@ -159,6 +168,10 @@ The Docker scheduler service arrives in #36. `onOneServer()` and `withoutOverlap
 
 Query budgets and the lazy-loading guard run in the suite ([`QueryBudgetTest`](tests/Feature/Performance/QueryBudgetTest.php)). The full index and query review is in [docs/performance.md](docs/performance.md): it records every `EXPLAIN` / `EXPLAIN ANALYZE` decision, the indexes added with their measured write cost, and the query rewrites still open (#84).
 
+- A new list endpoint needs a budget test: the number of queries must not grow with the number of rows.
+- Eager load in the Action's query, never lazily in a Resource. The lazy-loading guard is always on and throws outside production.
+- A new index needs an `EXPLAIN` before and after, run on MySQL with the dataset below.
+
 To rebuild the realistic multi-tenant dataset on a throwaway database (it is never part of `DatabaseSeeder`):
 
 ```bash
@@ -178,9 +191,11 @@ php artisan db:seed --class=PerformanceSeeder
 - [ADR-009: Caching, queues and Redis](docs/adr/009-caching-and-queues.md)
 - [ADR-010: Scheduled tasks and plan-expiry reminders](docs/adr/010-scheduled-tasks.md)
 
+ADR-008 is reserved for the karate module (v2.0).
+
 ## Getting started
 
-Requirements: PHP 8.4, Composer, MySQL 8.
+Requirements: PHP 8.4, Composer, MySQL 8, Redis 7.
 
 ```bash
 git clone https://github.com/MahmoudNagah999/RYADA.git
@@ -188,8 +203,9 @@ cd RYADA
 composer install
 cp .env.example .env
 php artisan key:generate
-# set DB_* values in .env, then:
-php artisan migrate
+# set DB_* and the Redis values in .env (see "Caching, queues and Redis"), then:
+php artisan migrate --seed       # seeds the sports catalog
+php artisan admin:create         # creates the super-admin for /admin
 ```
 
 ## Quality checks
@@ -200,3 +216,5 @@ composer analyse   # Larastan
 composer check     # lint + analyse + tests
 php artisan test   # Pest
 ```
+
+The suite takes a few minutes. If `composer check` hits Composer's 300 s process timeout, raise it first (PowerShell: `$env:COMPOSER_PROCESS_TIMEOUT = 1800`).
