@@ -890,5 +890,5 @@ it('keeps the attendance write constant in the number of records', function (): 
 })->skip(
     'N+1: RecordTrainingAttendanceAction inserts one row per record instead of using a bulk upsert. '
     .'Measured on 2026-11-16: 3 records => 17 queries, 12 records => 26 queries (one extra INSERT per record). '
-    .'Fix in a follow-up PR; PR 4 covers the notifier paths.',
+    .'Tracked in #84: https://github.com/MahmoudNagah999/RYADA/issues/84.',
 );
