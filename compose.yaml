@@ -68,27 +68,30 @@ services:
       retries: 6
       start_period: 15s
 
-  mysql:
-    image: mysql:8.0
-    command:
-      - "--character-set-server=utf8mb4"
-      - "--collation-server=utf8mb4_unicode_ci"
-    env_file:
-      - .env.docker
-    volumes:
-      - mysql-data:/var/lib/mysql
-    ports:
-      # Optional host access for a GUI client; 3307 avoids Herd's MySQL on 3306.
-      - "${DB_FORWARD_PORT:-3307}:3306"
-    networks:
-      - ryada
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+    mysql:
+        image: mysql:8.0
+        command:
+        - "--character-set-server=utf8mb4"
+        - "--collation-server=utf8mb4_unicode_ci"
+        env_file:
+        - .env.docker
+        volumes:
+        - mysql-data:/var/lib/mysql
+        ports:
+        # Optional host access for a GUI client; 3307 avoids Herd's MySQL on 3306.
+        - "${DB_FORWARD_PORT:-3307}:3306"
+        networks:
+        - ryada
+        restart: unless-stopped
+        healthcheck:
+        test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
+        interval: 10s
+        timeout: 5s
+        retries: 30
+        # The first start initialises an empty data volume twice (temporary server, then the
+        # real one). On a slow disk this took about 4.5 minutes, so the window is generous.
+        # Later starts are healthy in seconds.
+        start_period: 300s
 
   redis:
     image: redis:7
