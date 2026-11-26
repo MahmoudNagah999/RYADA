@@ -1,11 +1,7 @@
-* text=auto eol=lf
-
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
-
-/.github export-ignore
-CHANGELOG.md export-ignore
-.styleci.yml export-ignore
+# Shell scripts and container configuration must keep LF endings. Committed from Windows
+# they otherwise get CRLF, and the Linux containers then fail on `\r` (#36).
+*.sh text eol=lf
+Dockerfile text eol=lf
+compose.yaml text eol=lf
+docker/** text eol=lf
+.env.docker.example text eol=lf

@@ -1,0 +1,43 @@
+# Build context exclusions (issue #36).
+# `tests/` and `phpunit.xml` are deliberately NOT ignored: the same image runs the suite.
+
+# Version control, CI and editor/AI metadata
+.git
+.github
+.gitignore
+.claude
+.cursor
+.idea
+.phpactor.json
+.vscode
+.zed
+.editorconfig
+
+# Dependencies and build output: vendor/ is rebuilt in the vendor stage, node_modules is
+# not used by this image.
+vendor
+node_modules
+public/build
+public/hot
+public/storage
+/public/css/filament
+/public/js/filament
+/public/fonts/filament
+/public/fonts-manifest.dev.json
+
+# Framework state that must never be baked into the image
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+bootstrap/cache/*.php
+*.log
+.phpunit.result.cache
+.phpunit.cache
+
+# Secrets: only the committed examples are allowed in
+.env
+.env.*
+!.env.example
+!.env.docker.example
