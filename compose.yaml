@@ -1,6 +1,6 @@
 # RYADA application stack (issue #36).
-# PR 1 built app, nginx, mysql and redis. PR 2 adds the background services: `horizon`
-# (the queue worker, in this commit) and `scheduler` (the `schedule:work` loop, next one).
+# PR 1 built app, nginx, mysql and redis. PR 2 (this file) adds the two background
+# services: `horizon` (queue worker) and `scheduler` (the `schedule:work` loop).
 # Trusted proxies, the one-command setup and the README section are PR 3.
 #
 # Host ports (set them in the shell or the project .env, compose interpolates those only):
@@ -128,6 +128,52 @@ services:
       # Horizon needs a few seconds to register its master supervisor in Redis; before that
       # the check correctly reports "inactive". This window stops early false alarms.
       start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # scheduler: runs `php artisan schedule:work`.
+  # ADR-010 documents a cron entry calling `schedule:run` every minute. In Docker this
+  # foreground command does the same thing: it wakes up every minute and runs the due
+  # tasks from routes/console.php (club:notify-due at 08:00, clubs:notify-plan-expiry at
+  # 08:05, horizon:snapshot every five minutes).
+  # ---------------------------------------------------------------------------
+  scheduler:
+    image: ryada-app:local
+    env_file:
+      - .env.docker
+    volumes:
+      # Same shared volume as `app` and `horizon`; the scheduler writes framework caches
+      # and logs, so it is writable.
+      - storage:/var/www/html/storage
+    # Same reasoning as the worker: no RUN_MIGRATIONS here, and the entrypoint `exec`s the
+    # command, so `schedule:work` is PID 1 and gets the stop signal itself.
+    #
+    # It is safe to run MORE THAN ONE scheduler against this stack: the two reminder tasks
+    # are declared `->onOneServer()` and `->withoutOverlapping()` (routes/console.php).
+    # Both flags are locks in the shared Redis cache (CACHE_STORE=redis), so of N
+    # schedulers only one wins the lock and the others skip the task. `horizon:snapshot`
+    # has no such flag, which only means a redundant snapshot may be written - harmless.
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      app:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ryada
+    restart: unless-stopped
+    healthcheck:
+      # The app image has neither `ps` nor `pgrep` (checked with `command -v`), and adding
+      # procps would force a full 13-minute image rebuild. The entrypoint `exec`s the
+      # command, so PID 1 in this container IS `php artisan schedule:work`: reading
+      # /proc/1/cmdline proves the loop is still alive. The arguments are NUL-separated
+      # binary, hence `grep -qa` (treat as text, stay quiet, exit 0 on a match).
+      test: ["CMD-SHELL", "grep -qa schedule:work /proc/1/cmdline"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
 
   mysql:
     image: mysql:8.0
