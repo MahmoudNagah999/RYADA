@@ -1,5 +1,7 @@
-# RYADA application stack (issue #36, PR 1).
-# Queue worker, Horizon, the scheduler and trusted proxies are PR 2 and PR 3.
+# RYADA application stack (issue #36).
+# PR 1 built app, nginx, mysql and redis. PR 2 (this file) adds the two background
+# services: `horizon` (queue worker) and `scheduler` (the `schedule:work` loop).
+# Trusted proxies, the one-command setup and the README section are PR 3.
 #
 # Host ports (set them in the shell or the project .env, compose interpolates those only):
 #   APP_PORT        nginx, default 8080
@@ -67,6 +69,118 @@ services:
       timeout: 5s
       retries: 6
       start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # horizon: the queue worker.
+  # It runs `php artisan horizon`, which starts the supervisors defined in
+  # config/horizon.php for the current APP_ENV (`local` has `supervisor-default` on the
+  # `default` queue) and consumes the Redis queue. Without this service a dispatched job
+  # just sits in Redis and nothing ever sends it.
+  # ---------------------------------------------------------------------------
+  horizon:
+    # Same image as `app` and deliberately NO `build:` section: compose builds the image
+    # once for `app`, and the workers just reuse it. Two build sections for one image
+    # would mean two builds (13 minutes each on this machine) and a race on the tag.
+    image: ryada-app:local
+    env_file:
+      - .env.docker
+    volumes:
+      # The same named volume as `app`, not a copy: both containers must see the same
+      # storage/ (logs, framework cache, uploaded files). It is not read-only because
+      # Horizon writes framework caches and logs there.
+      - storage:/var/www/html/storage
+    # No `environment:` block on purpose: RUN_MIGRATIONS is only set for `app`. Even if it
+    # were set, the entrypoint migrates only when the command is exactly `php-fpm`, so a
+    # worker can never race the FPM container over the schema.
+    #
+    # The entrypoint ends with `exec "$@"`, so Horizon becomes PID 1 and SIGTERM from
+    # `docker compose stop` (or a deploy) reaches it directly instead of a shell.
+    command: ["php", "artisan", "horizon"]
+    depends_on:
+      # `app` healthy means the entrypoint already ran the migrations, so the worker never
+      # starts against an empty database. MySQL and Redis are listed explicitly as well so
+      # a partially started stack never leaves Horizon without its dependencies.
+      app:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ryada
+    restart: unless-stopped
+    # The PHP-FPM base image declares `STOPSIGNAL SIGQUIT` (correct for php-fpm itself), and
+    # Docker uses that image value as the signal for `docker compose stop`. Horizon only
+    # listens for SIGTERM (Laravel\Horizon\ListensForSignals), and Linux ignores an
+    # unhandled termination signal sent to PID 1, so the first attempts waited out the
+    # whole grace period and Docker killed the container (exit code 137). Asking compose
+    # for SIGTERM fixes it: measured 6.96 s for `docker compose stop horizon`, exit code 0.
+    stop_signal: SIGTERM
+    # Horizon's supervisor `timeout` is 60 s (config/horizon.php): a running job may take
+    # that long. Docker's default 10 s would SIGKILL it mid-flight on `docker compose
+    # stop`. 90 s is longer than 60 s, so the running job finishes and the process exits.
+    stop_grace_period: 90s
+    healthcheck:
+      # `horizon:status` is the only reliable "is it really working?" probe. It returns an
+      # exit code instead of a single word (verified on this stack):
+      #   0 = "Horizon is running."  -> the only case that must count as healthy
+      #   1 = "Horizon is paused."   -> processes exist but nothing is consumed
+      #   2 = "Horizon is inactive." -> no master supervisor registered in Redis at all
+      # Docker treats any non-zero exit as unhealthy, so the bare command gives exactly
+      # what we want: healthy only while Horizon is running.
+      test: ["CMD", "php", "artisan", "horizon:status"]
+      interval: 15s
+      timeout: 10s
+      retries: 6
+      # Horizon needs a few seconds to register its master supervisor in Redis; before that
+      # the check correctly reports "inactive". This window stops early false alarms.
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # scheduler: runs `php artisan schedule:work`.
+  # ADR-010 documents a cron entry calling `schedule:run` every minute. In Docker this
+  # foreground command does the same thing: it wakes up every minute and runs the due
+  # tasks from routes/console.php (club:notify-due at 08:00, clubs:notify-plan-expiry at
+  # 08:05, horizon:snapshot every five minutes).
+  # ---------------------------------------------------------------------------
+  scheduler:
+    image: ryada-app:local
+    env_file:
+      - .env.docker
+    volumes:
+      # Same shared volume as `app` and `horizon`; the scheduler writes framework caches
+      # and logs, so it is writable.
+      - storage:/var/www/html/storage
+    # Same reasoning as the worker: no RUN_MIGRATIONS here, and the entrypoint `exec`s the
+    # command, so `schedule:work` is PID 1 and gets the stop signal itself.
+    #
+    # It is safe to run MORE THAN ONE scheduler against this stack: the two reminder tasks
+    # are declared `->onOneServer()` and `->withoutOverlapping()` (routes/console.php).
+    # Both flags are locks in the shared Redis cache (CACHE_STORE=redis), so of N
+    # schedulers only one wins the lock and the others skip the task. `horizon:snapshot`
+    # has no such flag, which only means a redundant snapshot may be written - harmless.
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      app:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ryada
+    restart: unless-stopped
+    healthcheck:
+      # The app image has neither `ps` nor `pgrep` (checked with `command -v`), and adding
+      # procps would force a full 13-minute image rebuild. The entrypoint `exec`s the
+      # command, so PID 1 in this container IS `php artisan schedule:work`: reading
+      # /proc/1/cmdline proves the loop is still alive. The arguments are NUL-separated
+      # binary, hence `grep -qa` (treat as text, stay quiet, exit 0 on a match).
+      test: ["CMD-SHELL", "grep -qa schedule:work /proc/1/cmdline"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
 
   mysql:
     image: mysql:8.0
