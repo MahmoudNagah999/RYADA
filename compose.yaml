@@ -109,6 +109,13 @@ services:
     networks:
       - ryada
     restart: unless-stopped
+    # The PHP-FPM base image declares `STOPSIGNAL SIGQUIT` (correct for php-fpm itself), and
+    # Docker uses that image value as the signal for `docker compose stop`. Horizon only
+    # listens for SIGTERM (Laravel\Horizon\ListensForSignals), and Linux ignores an
+    # unhandled termination signal sent to PID 1, so the first attempts waited out the
+    # whole grace period and Docker killed the container (exit code 137). Asking compose
+    # for SIGTERM fixes it: measured 6.96 s for `docker compose stop horizon`, exit code 0.
+    stop_signal: SIGTERM
     # Horizon's supervisor `timeout` is 60 s (config/horizon.php): a running job may take
     # that long. Docker's default 10 s would SIGKILL it mid-flight on `docker compose
     # stop`. 90 s is longer than 60 s, so the running job finishes and the process exits.
